@@ -6,6 +6,14 @@ import TransactionScreen from "./TransactionScreen";
 import "./Home.css";
 
 const USER_STORAGE_KEY = "stockwise-user";
+const settingsItems = [
+  "Security",
+  "General",
+  "Firm Details",
+  "Updates",
+  "Data Explorer",
+  "Prints",
+];
 
 const navigation = [
   {
@@ -128,9 +136,13 @@ export default function Home() {
   );
   const [openSection, setOpenSection] = useState(null);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
+  const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
+  const [activeSetting, setActiveSetting] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
+  const settingsMenuRef = useRef(null);
   const navigate = useNavigate();
 
   const initials = userName
@@ -146,9 +158,15 @@ export default function Home() {
       if (!profileMenuRef.current?.contains(event.target)) {
         setIsProfileMenuOpen(false);
       }
+      if (!settingsMenuRef.current?.contains(event.target)) {
+        setIsSettingsMenuOpen(false);
+      }
     };
     const handleKeyDown = (event) => {
-      if (event.key === "Escape") setIsProfileMenuOpen(false);
+      if (event.key === "Escape") {
+        setIsProfileMenuOpen(false);
+        setIsSettingsMenuOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handlePointerDown);
@@ -181,6 +199,7 @@ export default function Home() {
   const closeMenus = () => {
     setOpenSection(null);
     setOpenSubmenu(null);
+    setIsMainNavOpen(false);
   };
 
   const handleNavigationItem = (label) => {
@@ -208,6 +227,47 @@ export default function Home() {
   return (
     <main className="home-page" data-theme={isDarkMode ? "dark" : "light"}>
       <header className="topbar print:hidden">
+        <div className="settings-menu-container relative mr-4 flex shrink-0 items-center gap-3" ref={settingsMenuRef}>
+          <button
+            className="grid h-9 w-9 shrink-0 place-content-center gap-[5px] rounded-md border border-[#e5ece8] bg-white hover:bg-[#f1f7f4] dark:border-[#38483f] dark:bg-[#1a241f] dark:hover:bg-[#26372e]"
+            type="button"
+            aria-label="Toggle settings menu"
+            aria-expanded={isSettingsMenuOpen}
+            aria-controls="settings-menu"
+            onClick={() => setIsSettingsMenuOpen((isOpen) => !isOpen)}
+          >
+            <span className="block h-[2px] w-[17px] rounded bg-[#485650] dark:bg-[#c1cec6]" />
+            <span className="block h-[2px] w-[17px] rounded bg-[#485650] dark:bg-[#c1cec6]" />
+            <span className="block h-[2px] w-[17px] rounded bg-[#485650] dark:bg-[#c1cec6]" />
+          </button>
+          {isSettingsMenuOpen && (
+            <div
+              className="absolute left-0 top-[calc(100%+18px)] z-20 w-[min(250px,calc(100vw-2rem))] rounded-xl border border-[#e7eeea] bg-white p-2 shadow-[0_12px_30px_rgba(25,49,39,0.12)] dark:border-[#2a3931] dark:bg-[#1a241f] dark:shadow-[0_12px_30px_rgba(0,0,0,0.3)]"
+              id="settings-menu"
+              aria-label="Settings"
+            >
+              <h2 className="m-0 border-b border-[#edf1ef] px-3 py-2 text-[11px] font-bold uppercase tracking-[1.1px] text-[#78857f] dark:border-[#2a3931] dark:text-[#9eada4]">
+                Settings
+              </h2>
+              <nav className="mt-1 grid gap-1" aria-label="Settings menu">
+                {settingsItems.map((setting) => (
+                  <button
+                    className={`rounded-md px-3 py-[10px] text-left text-[13px] text-[#485650] hover:bg-[#f1f7f4] hover:text-[#1d7653] dark:text-[#c1cec6] dark:hover:bg-[#26372e] dark:hover:text-[#8bd1ac] ${
+                      activeSetting === setting
+                        ? "bg-[#f1f7f4] font-semibold text-[#1d7653] dark:bg-[#26372e] dark:text-[#8bd1ac]"
+                        : ""
+                    }`}
+                    type="button"
+                    key={setting}
+                    onClick={() => setActiveSetting(setting)}
+                  >
+                    {setting}
+                  </button>
+                ))}
+              </nav>
+            </div>
+          )}
+        </div>
         <a
           className="brand"
           href="/home"
@@ -221,7 +281,24 @@ export default function Home() {
           <span>stockwise</span>
         </a>
 
-        <nav className="main-nav" aria-label="Main navigation">
+        <button
+          className="main-nav-toggle"
+          type="button"
+          aria-label={isMainNavOpen ? "Close main menu" : "Open main menu"}
+          aria-expanded={isMainNavOpen}
+          aria-controls="primary-navigation"
+          onClick={() => setIsMainNavOpen((isOpen) => !isOpen)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        <nav
+          id="primary-navigation"
+          className={`main-nav${isMainNavOpen ? " main-nav-open" : ""}`}
+          aria-label="Main navigation"
+        >
           {navigation.map((section) => (
             <details
               className="nav-dropdown"

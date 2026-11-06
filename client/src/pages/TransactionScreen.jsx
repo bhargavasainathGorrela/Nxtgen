@@ -349,6 +349,26 @@ export default function TransactionScreen({ type, onClose }) {
     });
   };
 
+  const removeLine = (index) => {
+    setTransaction((current) => {
+      const lines = current.lines.length === 1
+        ? [emptyLine()]
+        : current.lines.filter((_, lineIndex) => lineIndex !== index);
+      const gross = lines.reduce((sum, line) => sum + lineAmount(line), 0);
+      return {
+        ...current,
+        lines,
+        discountAmount: numericValue(current.discountPercent) > 0
+          ? gross * numericValue(current.discountPercent) / 100
+          : current.discountAmount,
+      };
+    });
+  };
+
+  const addLine = () => {
+    setTransaction((current) => ({ ...current, lines: [...current.lines, emptyLine()] }));
+  };
+
   const selectTransaction = async (id) => {
     setLoading(true);
     setError("");
@@ -480,13 +500,13 @@ export default function TransactionScreen({ type, onClose }) {
 
       <div className={card}>
         <form
-          className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-[17px] dark:border-[#2a3931] print:hidden max-[520px]:grid-cols-[1fr_auto]"
+          className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-[17px] dark:border-[#2a3931] print:hidden max-[700px]:grid-cols-[minmax(0,1fr)_auto]"
           onSubmit={(event) => {
             event.preventDefault();
             findTransactions(search);
           }}
         >
-          <label className={`${fieldLabel} max-[520px]:col-span-2`} htmlFor={`transaction-search-${type}`}>Find by invoice, feed no. or account</label>
+          <label className={`${fieldLabel} max-[700px]:col-span-2`} htmlFor={`transaction-search-${type}`}>Find by invoice, feed no. or account</label>
           <input
             className={input}
             id={`transaction-search-${type}`}
@@ -577,7 +597,7 @@ export default function TransactionScreen({ type, onClose }) {
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Items</h2>
             <span className="text-xs text-[#85918b]">{transaction.lines.filter((line) => line.itemCode || line.itemName).length} rows</span>
           </div>
-          <div className="overflow-auto">
+          <div className="hidden overflow-auto min-[1024px]:block">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -638,19 +658,7 @@ export default function TransactionScreen({ type, onClose }) {
                           type="button"
                           className="h-7 w-7 rounded border border-[#f0d7d4] bg-white text-[17px] text-[#a8403a]"
                           aria-label={`Remove item row ${index + 1}`}
-                          onClick={() => setTransaction((current) => {
-                            const lines = current.lines.length === 1
-                              ? [emptyLine()]
-                              : current.lines.filter((_, lineIndex) => lineIndex !== index);
-                            const gross = lines.reduce((sum, line) => sum + lineAmount(line), 0);
-                            return {
-                              ...current,
-                              lines,
-                              discountAmount: numericValue(current.discountPercent) > 0
-                                ? gross * numericValue(current.discountPercent) / 100
-                                : current.discountAmount,
-                            };
-                          })}
+                          onClick={() => removeLine(index)}
                         >
                           ×
                         </button>
@@ -664,7 +672,7 @@ export default function TransactionScreen({ type, onClose }) {
                       <button
                         type="button"
                         className="py-1 text-xs font-semibold text-[#23734f]"
-                        onClick={() => setTransaction((current) => ({ ...current, lines: [...current.lines, emptyLine()] }))}
+                        onClick={addLine}
                       >
                         + Add item row
                       </button>
@@ -673,6 +681,83 @@ export default function TransactionScreen({ type, onClose }) {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="grid gap-3 min-[1024px]:hidden">
+            {transaction.lines.map((line, index) => (
+              <div className="grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]" key={`${line.id || "mobile"}-${index}`}>
+                <div className="grid min-w-0 grid-cols-2 gap-3">
+                  <label className="grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Item Code</span>
+                    <input
+                      className={input}
+                      list={`transaction-items-${type}`}
+                      value={line.itemCode}
+                      readOnly={isReadOnly}
+                      maxLength={50}
+                      onChange={(event) => updateLine(index, "itemCode", event.target.value)}
+                      onBlur={(event) => resolveItemCode(index, event.target.value.trim())}
+                      aria-label={`Item code row ${index + 1}`}
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Item Name</span>
+                    <input
+                      className={input}
+                      value={line.itemName}
+                      readOnly={isReadOnly || Boolean(line.itemCode)}
+                      maxLength={200}
+                      onChange={(event) => updateLine(index, "itemName", event.target.value)}
+                      aria-label={`Item name row ${index + 1}`}
+                    />
+                  </label>
+                  {[
+                    ["price", "Price"],
+                    ["qty", "Qty"],
+                    ["free", "Free"],
+                    ["expYear", "Exp Yr"],
+                    ["expMonth", "Exp Month"],
+                  ].map(([field, label]) => (
+                    <label className="grid min-w-0 gap-1.5" key={field}>
+                      <span className={fieldLabel}>{label}</span>
+                      <input
+                        className={input}
+                        type="number"
+                        min="0"
+                        step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
+                        value={line[field]}
+                        readOnly={isReadOnly}
+                        onChange={(event) => updateLine(index, field, event.target.value)}
+                        aria-label={`${field} row ${index + 1}`}
+                      />
+                    </label>
+                  ))}
+                  <div className="grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Amount</span>
+                    <span className="flex h-9 items-center rounded-md bg-[#f0f7f3] px-2 text-sm font-semibold tabular-nums text-[#1d704f] dark:bg-[#26372e] dark:text-[#8bd1ac]">
+                      {lineAmount(line).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                {!isReadOnly && (
+                  <button
+                    type="button"
+                    className="min-h-9 rounded-md border border-[#f0d7d4] px-3 text-xs font-semibold text-[#a8403a]"
+                    onClick={() => removeLine(index)}
+                  >
+                    Remove item row
+                  </button>
+                )}
+              </div>
+            ))}
+            {!isReadOnly && (
+              <button
+                type="button"
+                className="min-h-9 rounded-md border border-dashed border-[#a9cdb9] text-xs font-semibold text-[#23734f]"
+                onClick={addLine}
+              >
+                + Add item row
+              </button>
+            )}
           </div>
           <datalist id={`transaction-items-${type}`}>
             {items.map((item) => (
@@ -739,7 +824,7 @@ export default function TransactionScreen({ type, onClose }) {
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">{config.title} records</h2>
             <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${transactions.length} shown`}</span>
           </div>
-          <div className="overflow-auto">
+          <div className="hidden overflow-auto min-[900px]:block">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -767,6 +852,31 @@ export default function TransactionScreen({ type, onClose }) {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="grid gap-3 min-[900px]:hidden">
+            {transactions.map((row) => (
+              <button
+                type="button"
+                key={row.id}
+                className={`grid min-w-0 gap-2 rounded-lg border p-3 text-left ${
+                  transaction.id === row.id
+                    ? "border-[#23815c] bg-[#f0f7f3] dark:bg-[#26372e]"
+                    : "border-[#e9efec] bg-white hover:bg-[#f7f9f8] dark:border-[#2a3931] dark:bg-[#1a241f] dark:hover:bg-[#26372e]"
+                }`}
+                onClick={() => selectTransaction(row.id)}
+              >
+                <span className="break-words font-semibold text-[#1d704f] dark:text-[#8bd1ac]">{row.invoiceNo} · {row.name}</span>
+                <span className="flex flex-wrap gap-x-3 gap-y-1 break-words text-xs text-[#536159] dark:text-[#b2c0b7]">
+                  <span>Feed: {row.feedNo}</span>
+                  <span>{row.billType}</span>
+                  <span>Net: {numericValue(row.netAmount).toFixed(2)}</span>
+                  <span>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : ""}</span>
+                </span>
+              </button>
+            ))}
+            {!loading && transactions.length === 0 && (
+              <p className="m-0 p-6 text-center text-sm text-[#87928c]">No transactions to display.</p>
+            )}
           </div>
         </div>
       </div>

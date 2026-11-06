@@ -240,7 +240,7 @@ export default function Login() {
       {/* ===== Customize (pencil) button + panel ===== */}
       <div ref={panelRef} className="fixed bottom-5 right-5 z-50">
         {panelOpen && (
-          <div className="mb-3 w-72 rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10">
+          <div className="mb-3 w-[min(18rem,calc(100vw-2rem))] rounded-2xl bg-white p-4 shadow-2xl ring-1 ring-black/10">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-800">
                 Customize background

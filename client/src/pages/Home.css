@@ -1,4 +1,6 @@
 .home-page {
+  width: 100%;
+  overflow-x: clip;
   min-height: 100vh;
   color: #17231f;
   background: #f7f9f8;
@@ -12,13 +14,15 @@
   justify-content: space-between;
   min-height: 72px;
   padding: 0 5.5%;
+  gap: 8px;
   background: #fff;
   border-bottom: 1px solid #e8eeeb;
 }
 
 .brand {
   display: inline-flex;
-  flex: 0 0 180px;
+  flex: 0 1 180px;
+  min-width: 0;
   align-items: center;
   gap: 10px;
   color: #18392e;
@@ -26,6 +30,37 @@
   font-weight: 750;
   letter-spacing: -0.7px;
   text-decoration: none;
+}
+
+.main-nav-toggle {
+  display: none;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #e5ece8;
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.main-nav-toggle span {
+  width: 17px;
+  height: 2px;
+  border-radius: 2px;
+  background: #485650;
+}
+
+.main-nav-toggle:hover {
+  background: #f1f7f4;
+}
+
+.main-nav-toggle:focus-visible {
+  outline: 2px solid #23815c;
+  outline-offset: 2px;
 }
 
 .brand-mark {
@@ -217,6 +252,7 @@
   cursor: pointer;
   font: inherit;
   font-size: 13px;
+  min-width: 0;
 }
 
 .profile-menu-container {
@@ -290,6 +326,10 @@
   padding: 48px 0 28px;
 }
 
+.welcome-section > div {
+  min-width: 0;
+}
+
 .eyebrow {
   margin: 0 0 10px;
   color: #25815c;
@@ -309,6 +349,7 @@
   margin: 9px 0 0;
   color: #78857f;
   font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .primary-button {
@@ -486,55 +527,108 @@
   font-size: 12px;
 }
 
-@media (max-width: 1050px) {
-  .topbar {
-    padding-right: 3%;
-    padding-left: 3%;
-  }
-
-  .brand,
-  .header-actions {
-    flex-basis: 135px;
-  }
-
-  .main-nav {
-    gap: 0;
-  }
-
-  .nav-dropdown summary {
-    gap: 6px;
-    padding-right: 8px;
-    padding-left: 8px;
-    font-size: 12px;
-  }
-}
-
-@media (max-width: 780px) {
+@media (max-width: 1199px) {
   .topbar {
     min-height: auto;
-    flex-wrap: wrap;
-    padding: 13px 5.5% 0;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    padding: 12px 4%;
   }
 
-  .brand,
-  .header-actions {
+  .settings-menu-container {
+    grid-column: 1;
+    grid-row: 1;
+    margin-right: 0 !important;
+  }
+
+  .brand {
+    grid-column: 2;
+    grid-row: 1;
     flex-basis: auto;
   }
 
-  .main-nav {
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
-    overflow-x: auto;
-    padding: 9px 0;
+  .main-nav-toggle {
+    display: flex;
+    grid-column: 3;
+    grid-row: 1;
   }
 
-  .nav-dropdown summary {
+  .header-actions {
+    grid-column: 4;
+    grid-row: 1;
+    flex-basis: auto;
+    gap: 8px;
+  }
+
+  .main-nav {
+    display: none;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    justify-content: stretch;
+    align-items: start;
+    gap: 4px;
+    padding: 8px 0 2px;
+  }
+
+  .main-nav.main-nav-open {
+    display: grid;
+  }
+
+  .nav-dropdown {
+    min-width: 0;
+  }
+
+  .nav-dropdown > summary {
+    justify-content: space-between;
     padding: 10px;
   }
 
+  .dropdown-menu,
+  .submenu-menu {
+    position: static;
+    display: none;
+    width: 100%;
+    min-width: 0;
+    max-height: min(45vh, 300px);
+    overflow-y: auto;
+    margin-top: 4px;
+    box-shadow: none;
+  }
+
+  .nav-dropdown[open] > .dropdown-menu,
+  .submenu-dropdown[open] > .submenu-menu {
+    display: block;
+  }
+
+  .submenu-dropdown > summary {
+    gap: 8px;
+    white-space: normal;
+  }
+
+  .submenu-menu a {
+    white-space: normal;
+  }
+
+  .nav-dropdown summary {
+    white-space: normal;
+  }
+
+  .welcome-section,
+  .dashboard-grid,
+  .activity-panel {
+    width: min(1120px, 92%);
+  }
+
   .welcome-section {
-    padding-top: 34px;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-top: 38px;
+  }
+
+  .welcome-section .primary-button {
+    flex-shrink: 0;
   }
 
   .dashboard-grid {
@@ -542,46 +636,104 @@
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 767px) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    padding: 10px 4%;
+  }
+
+  .settings-menu-container {
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 7px;
+    font-size: 17px;
+  }
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .main-nav {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dropdown-menu,
   .submenu-menu {
-    top: calc(100% + 2px);
-    left: 0;
+    max-height: min(38vh, 260px);
+  }
+
+  .welcome-section,
+  .dashboard-grid,
+  .activity-panel {
+    width: 92%;
   }
 
   .welcome-section {
     align-items: flex-start;
-    gap: 18px;
+    gap: 14px;
     flex-direction: column;
+    padding-top: 30px;
   }
 
   .dashboard-grid {
-    gap: 10px;
+    gap: 12px;
   }
 
   .overview-card {
-    min-height: 130px;
-    padding: 15px;
+    min-height: 125px;
+    padding: 14px;
   }
 
   .card-value {
-    font-size: 23px;
+    font-size: clamp(20px, 6vw, 23px);
   }
 
   .card-icon {
-    top: 12px;
-    right: 12px;
-    width: 27px;
-    height: 27px;
+    top: 10px;
+    right: 10px;
+    width: 26px;
+    height: 26px;
   }
 
   .activity-panel {
-    padding-right: 17px;
-    padding-left: 17px;
+    margin-top: 18px;
+    padding: 18px 15px 0;
   }
 
   .profile-name,
   .profile-button > .nav-chevron {
     display: none;
+  }
+
+  .profile-button {
+    gap: 0;
+  }
+}
+
+@media (max-width: 359px) {
+  .topbar {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .main-nav-toggle {
+    grid-column: 3;
+  }
+
+  .header-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-end;
+  }
+
+  .main-nav {
+    grid-row: 3;
   }
 }
 

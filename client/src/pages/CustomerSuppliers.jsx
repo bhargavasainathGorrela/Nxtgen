@@ -279,7 +279,7 @@ export default function CustomerSuppliers() {
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Customer / Supplier list</h2>
             <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${accounts.length} shown`}</span>
           </div>
-          <div className="overflow-x-auto">
+          <div className="hidden overflow-x-auto min-[1024px]:block">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -313,6 +313,28 @@ export default function CustomerSuppliers() {
                 )}
               </tbody>
             </table>
+          </div>
+          <div className="grid gap-3 min-[1024px]:hidden">
+            {accounts.map((row) => (
+              <button
+                type="button"
+                key={row.code}
+                className={`grid min-w-0 gap-2 rounded-lg border p-3 text-left ${
+                  account.code === row.code
+                    ? "border-[#23815c] bg-[#f0f7f3] dark:bg-[#26372e]"
+                    : "border-[#e9efec] bg-white hover:bg-[#f7f9f8] dark:border-[#2a3931] dark:bg-[#1a241f] dark:hover:bg-[#26372e]"
+                }`}
+                onClick={() => selectAccount(row)}
+              >
+                <span className="break-words font-semibold text-[#1d704f] dark:text-[#8bd1ac]">{row.code} · {row.name}</span>
+                <span className="break-words text-xs text-[#536159] dark:text-[#b2c0b7]">
+                  {[row.city, row.cell, String(row.showin || "").toLowerCase() === "suplier" ? "Supplier" : row.showin, row.active ? "Active" : "Inactive"].filter(Boolean).join(" · ")}
+                </span>
+              </button>
+            ))}
+            {!loading && accounts.length === 0 && (
+              <p className="m-0 p-6 text-center text-sm text-[#87928c]">No accounts to display.</p>
+            )}
           </div>
         </div>
       </div>
