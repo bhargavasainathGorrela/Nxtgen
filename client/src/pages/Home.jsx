@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import CustomerSuppliers from "./CustomerSuppliers";
+import Items from "./Items";
+import TransactionScreen from "./TransactionScreen";
 import "./Home.css";
 
 const USER_STORAGE_KEY = "stockwise-user";
@@ -125,6 +128,7 @@ export default function Home() {
   );
   const [openSection, setOpenSection] = useState(null);
   const [openSubmenu, setOpenSubmenu] = useState(null);
+  const [activeView, setActiveView] = useState("dashboard");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const navigate = useNavigate();
@@ -179,6 +183,23 @@ export default function Home() {
     setOpenSubmenu(null);
   };
 
+  const handleNavigationItem = (label) => {
+    const transactionViews = {
+      Sale: "sale",
+      Purchase: "purchase",
+      "Sale Return": "saleReturn",
+      "Purchase Return": "purchaseReturn",
+    };
+    if (label === "Customers/Suppliers") {
+      setActiveView("customer-suppliers");
+    } else if (label === "Items") {
+      setActiveView("items");
+    } else if (transactionViews[label]) {
+      setActiveView(transactionViews[label]);
+    }
+    closeMenus();
+  };
+
   const handleLogout = () => {
     localStorage.removeItem(USER_STORAGE_KEY);
     navigate("/");
@@ -187,7 +208,15 @@ export default function Home() {
   return (
     <main className="home-page" data-theme={isDarkMode ? "dark" : "light"}>
       <header className="topbar">
-        <a className="brand" href="/home" aria-label="Stockwise home">
+        <a
+          className="brand"
+          href="/home"
+          aria-label="Stockwise home"
+          onClick={(event) => {
+            event.preventDefault();
+            setActiveView("dashboard");
+          }}
+        >
           <span className="brand-mark" aria-hidden="true">S</span>
           <span>stockwise</span>
         </a>
@@ -214,7 +243,7 @@ export default function Home() {
                     return (
                       <a href="#" key={item} onClick={(event) => {
                         event.preventDefault();
-                        closeMenus();
+                        handleNavigationItem(item);
                       }}>
                         {item}
                       </a>
@@ -225,7 +254,7 @@ export default function Home() {
                     return (
                       <a href="#" key={item.label} onClick={(event) => {
                         event.preventDefault();
-                        closeMenus();
+                        handleNavigationItem(item.label);
                       }}>
                         {item.label}
                       </a>
@@ -252,7 +281,7 @@ export default function Home() {
                             key={subitem}
                             onClick={(event) => {
                               event.preventDefault();
-                              closeMenus();
+                              handleNavigationItem(subitem);
                             }}
                           >
                             {subitem}
@@ -301,6 +330,18 @@ export default function Home() {
         </div>
       </header>
 
+      {activeView === "customer-suppliers" ? (
+        <CustomerSuppliers />
+      ) : activeView === "items" ? (
+        <Items />
+      ) : ["sale", "purchase", "saleReturn", "purchaseReturn"].includes(activeView) ? (
+        <TransactionScreen
+          key={activeView}
+          type={activeView}
+          onClose={() => setActiveView("dashboard")}
+        />
+      ) : (
+      <>
       <section className="welcome-section">
         <div>
           <p className="eyebrow">OVERVIEW</p>
@@ -353,6 +394,8 @@ export default function Home() {
           <span>New activity will appear here.</span>
         </div>
       </section>
+      </>
+      )}
     </main>
   );
 }

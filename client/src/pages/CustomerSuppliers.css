@@ -1,0 +1,319 @@
+.account-screen {
+  width: min(1120px, 89%);
+  margin: 0 auto;
+  padding: 42px 0 56px;
+}
+
+.account-heading {
+  margin-bottom: 22px;
+}
+
+.account-heading h1 {
+  margin: 0;
+  color: #1c2b24;
+  font-size: clamp(24px, 3vw, 30px);
+  letter-spacing: -1px;
+}
+
+.account-description {
+  margin: 8px 0 0;
+  color: #78857f;
+  font-size: 14px;
+}
+
+.account-card {
+  padding: 22px;
+  border: 1px solid #e9efec;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(27 49 39 / 3%);
+}
+
+.account-search {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.account-search label,
+.account-field > span {
+  color: #536159;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-search input,
+.account-field input,
+.account-field select {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #dfe7e2;
+  border-radius: 6px;
+  outline: none;
+  color: #27372f;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+}
+
+.account-search input:focus,
+.account-field input:focus,
+.account-field select:focus {
+  border-color: #3a9a70;
+  box-shadow: 0 0 0 3px rgb(58 154 112 / 12%);
+}
+
+.account-field input:read-only,
+.account-field input:disabled,
+.account-field select:disabled {
+  color: #69766f;
+  background: #f7f9f8;
+}
+
+.account-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  padding: 20px 0;
+}
+
+.account-field {
+  display: grid;
+  gap: 7px;
+}
+
+.required-mark {
+  color: #ba4b41;
+}
+
+.account-active {
+  display: flex;
+  align-items: center;
+  align-self: end;
+  gap: 8px;
+  min-height: 38px;
+  color: #536159;
+  font-size: 13px;
+}
+
+.account-active input {
+  width: 16px;
+  height: 16px;
+  accent-color: #23815c;
+}
+
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #edf1ef;
+}
+
+.account-button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #dfe7e2;
+  border-radius: 6px;
+  color: #435149;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.account-button:hover:not(:disabled) {
+  border-color: #a9cdb9;
+  background: #f3f8f5;
+}
+
+.account-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.account-button-primary {
+  border-color: #23815c;
+  color: #fff;
+  background: #23815c;
+}
+
+.account-button-primary:hover:not(:disabled) {
+  border-color: #1d704f;
+  color: #fff;
+  background: #1d704f;
+}
+
+.account-button-danger {
+  margin-left: auto;
+  color: #a8403a;
+}
+
+.account-message {
+  margin: 14px 0 0;
+  color: #23734f;
+  font-size: 13px;
+}
+
+.account-error {
+  color: #b13d36;
+}
+
+.account-results {
+  padding-top: 20px;
+}
+
+.account-results-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 11px;
+}
+
+.account-results-heading h2 {
+  margin: 0;
+  color: #293a31;
+  font-size: 14px;
+}
+
+.account-results-heading > span {
+  color: #85918b;
+  font-size: 12px;
+}
+
+.account-table-wrap {
+  overflow-x: auto;
+}
+
+.account-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: left;
+}
+
+.account-table th {
+  color: #728078;
+  background: #f7f9f8;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.account-table th,
+.account-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid #edf1ef;
+  white-space: nowrap;
+}
+
+.account-table tbody tr {
+  color: #46564e;
+  cursor: pointer;
+}
+
+.account-table tbody tr:hover,
+.account-table tbody .account-row-selected {
+  background: #f0f7f3;
+}
+
+.account-table tbody .account-row-selected {
+  color: #1d704f;
+  font-weight: 600;
+}
+
+.account-table .account-empty {
+  padding: 24px;
+  color: #87928c;
+  text-align: center;
+}
+
+.home-page[data-theme="dark"] .account-heading h1,
+.home-page[data-theme="dark"] .account-results-heading h2 {
+  color: #e3ebe6;
+}
+
+.home-page[data-theme="dark"] .account-card {
+  border-color: #2a3931;
+  background: #1a241f;
+}
+
+.home-page[data-theme="dark"] .account-description,
+.home-page[data-theme="dark"] .account-search label,
+.home-page[data-theme="dark"] .account-field > span,
+.home-page[data-theme="dark"] .account-active,
+.home-page[data-theme="dark"] .account-table tbody tr {
+  color: #b2c0b7;
+}
+
+.home-page[data-theme="dark"] .account-search input,
+.home-page[data-theme="dark"] .account-field input,
+.home-page[data-theme="dark"] .account-field select,
+.home-page[data-theme="dark"] .account-button {
+  border-color: #38483f;
+  color: #d3ded7;
+  background: #1a241f;
+}
+
+.home-page[data-theme="dark"] .account-field input:read-only,
+.home-page[data-theme="dark"] .account-field input:disabled,
+.home-page[data-theme="dark"] .account-field select:disabled,
+.home-page[data-theme="dark"] .account-table th {
+  background: #222f28;
+}
+
+.home-page[data-theme="dark"] .account-search,
+.home-page[data-theme="dark"] .account-actions,
+.home-page[data-theme="dark"] .account-table th,
+.home-page[data-theme="dark"] .account-table td {
+  border-color: #2a3931;
+}
+
+.home-page[data-theme="dark"] .account-table th {
+  color: #9eada4;
+}
+
+.home-page[data-theme="dark"] .account-table tbody tr:hover,
+.home-page[data-theme="dark"] .account-table tbody .account-row-selected,
+.home-page[data-theme="dark"] .account-button:hover:not(:disabled) {
+  background: #26372e;
+}
+
+@media (max-width: 760px) {
+  .account-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .account-screen {
+    padding-top: 30px;
+  }
+
+  .account-card {
+    padding: 15px;
+  }
+
+  .account-search {
+    grid-template-columns: 1fr auto;
+  }
+
+  .account-search label {
+    grid-column: 1 / -1;
+  }
+
+  .account-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .account-button-danger {
+    margin-left: 0;
+  }
+}
