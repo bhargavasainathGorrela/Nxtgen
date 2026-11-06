@@ -207,7 +207,7 @@ export default function Home() {
 
   return (
     <main className="home-page" data-theme={isDarkMode ? "dark" : "light"}>
-      <header className="topbar">
+      <header className="topbar print:hidden">
         <a
           className="brand"
           href="/home"

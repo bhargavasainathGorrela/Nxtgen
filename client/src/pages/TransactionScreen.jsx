@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import "./TransactionScreen.css";
 
 const API_URL = "http://localhost:5000/api/transactions";
 const TRANSACTION_TYPES = {
@@ -8,6 +7,14 @@ const TRANSACTION_TYPES = {
   saleReturn: { title: "Sale Return", accountType: "customer", hasImport: false },
   purchaseReturn: { title: "Purchase Return", accountType: "supplier", hasImport: false },
 };
+const screen = "mx-auto w-[94%] max-w-[1320px] py-8 pb-12 max-[520px]:pt-6";
+const card = "rounded-[11px] border border-[#e9efec] bg-white p-5 shadow-[0_2px_6px_rgba(27,49,39,0.03)] dark:border-[#2a3931] dark:bg-[#1a241f] max-[520px]:p-[13px]";
+const button = "min-h-9 rounded-md border border-[#dfe7e2] bg-white px-[14px] text-xs font-semibold text-[#435149] hover:border-[#a9cdb9] hover:bg-[#f3f8f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:hover:bg-[#26372e]";
+const primaryButton = "border-[#23815c] bg-[#23815c] text-white hover:border-[#1d704f] hover:bg-[#1d704f] dark:border-[#23815c] dark:bg-[#23815c] dark:text-white";
+const input = "h-9 w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px-[9px] text-xs text-[#27372f] outline-none focus:border-[#3a9a70] focus:ring-[3px] focus:ring-[#3a9a70]/[0.12] read-only:bg-[#f7f9f8] read-only:text-[#69766f] disabled:bg-[#f7f9f8] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:read-only:bg-[#222f28] dark:disabled:bg-[#222f28] print:border-0 print:bg-transparent print:text-black";
+const fieldLabel = "text-xs font-semibold text-[#536159] dark:text-[#b2c0b7]";
+const tableHeader = "border-b border-[#edf1ef] bg-[#f7f9f8] px-[7px] py-[7px] text-left text-[10px] font-semibold uppercase tracking-[0.35px] text-[#728078] dark:border-[#2a3931] dark:bg-[#222f28] dark:text-[#9eada4]";
+const tableCell = "min-w-[78px] whitespace-nowrap border-b border-[#edf1ef] p-[7px] dark:border-[#2a3931]";
 
 function emptyLine() {
   return {
@@ -447,10 +454,10 @@ export default function TransactionScreen({ type, onClose }) {
 
   if (minimized) {
     return (
-      <section className="transaction-minimized" aria-label={`${config.title} minimized`}>
-        <span>{config.title} is minimized</span>
-        <button type="button" className="transaction-button" onClick={() => setMinimized(false)}>Restore</button>
-        <button type="button" className="transaction-button transaction-close-button" onClick={onClose}>Close</button>
+      <section className="mx-auto my-4 flex w-[94%] max-w-[1320px] items-center justify-end gap-2 rounded-lg border border-[#e9efec] bg-white p-3 text-[#536159] dark:border-[#2a3931] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label={`${config.title} minimized`}>
+        <span className="mr-auto text-[13px] font-semibold">{config.title} is minimized</span>
+        <button type="button" className={button} onClick={() => setMinimized(false)}>Restore</button>
+        <button type="button" className={`${button} text-[#a8403a]`} onClick={onClose}>Close</button>
       </section>
     );
   }
@@ -458,42 +465,44 @@ export default function TransactionScreen({ type, onClose }) {
   const isReadOnly = mode === "view";
 
   return (
-    <section className="transaction-screen" aria-labelledby="transaction-title">
-      <div className="transaction-heading">
+    <section className={screen} aria-labelledby="transaction-title">
+      <div className="mb-[18px] flex items-start justify-between">
         <div>
           <p className="eyebrow">TRANSACTIONS</p>
-          <h1 id="transaction-title">{config.title}</h1>
-          <p className="transaction-description">Enter and manage {config.title.toLowerCase()} invoices.</p>
+          <h1 id="transaction-title" className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">{config.title}</h1>
+          <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">Enter and manage {config.title.toLowerCase()} invoices.</p>
         </div>
-        <div className="transaction-window-controls">
-          <button type="button" className="transaction-window-button" aria-label="Minimize screen" title="Minimize" onClick={() => setMinimized(true)}>−</button>
-          <button type="button" className="transaction-window-button transaction-window-close" aria-label="Close screen" title="Close" onClick={onClose}>×</button>
+        <div className="flex gap-[7px] print:hidden">
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label="Minimize screen" title="Minimize" onClick={() => setMinimized(true)}>−</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#a8403a] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f]" aria-label="Close screen" title="Close" onClick={onClose}>×</button>
         </div>
       </div>
 
-      <div className="transaction-card">
+      <div className={card}>
         <form
-          className="transaction-search"
+          className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-[17px] dark:border-[#2a3931] print:hidden max-[520px]:grid-cols-[1fr_auto]"
           onSubmit={(event) => {
             event.preventDefault();
             findTransactions(search);
           }}
         >
-          <label htmlFor={`transaction-search-${type}`}>Find by invoice, feed no. or account</label>
+          <label className={`${fieldLabel} max-[520px]:col-span-2`} htmlFor={`transaction-search-${type}`}>Find by invoice, feed no. or account</label>
           <input
+            className={input}
             id={`transaction-search-${type}`}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Enter invoice, feed number or account"
           />
-          <button className="transaction-button transaction-button-primary" type="submit" disabled={loading}>Find</button>
+          <button className={`${button} ${primaryButton}`} type="submit" disabled={loading}>Find</button>
         </form>
 
-        <form className="transaction-form" onSubmit={saveTransaction}>
-          <div className="transaction-header-fields">
-            <label className="transaction-field">
-              <span>Code <b>*</b></span>
+        <form onSubmit={saveTransaction}>
+          <div className="grid grid-cols-4 gap-3 py-[17px] pb-5 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
               <input
+                className={input}
                 list={`transaction-accounts-${type}`}
                 value={transaction.accountCode}
                 required
@@ -509,41 +518,42 @@ export default function TransactionScreen({ type, onClose }) {
                 ))}
               </datalist>
             </label>
-            <label className="transaction-field transaction-field-wide">
-              <span>Name</span>
-              <input value={transaction.name} readOnly />
+            <label className="grid min-w-0 gap-1.5 max-[800px]:col-span-2 max-[520px]:col-span-1">
+              <span className={fieldLabel}>Name</span>
+              <input className={input} value={transaction.name} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Door No</span>
-              <input value={transaction.doorNo} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Door No</span>
+              <input className={input} value={transaction.doorNo} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Street</span>
-              <input value={transaction.street} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Street</span>
+              <input className={input} value={transaction.street} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Area</span>
-              <input value={transaction.area} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Area</span>
+              <input className={input} value={transaction.area} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>City</span>
-              <input value={transaction.city} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>City</span>
+              <input className={input} value={transaction.city} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Phone</span>
-              <input value={transaction.phone} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Phone</span>
+              <input className={input} value={transaction.phone} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Cell</span>
-              <input value={transaction.cell} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Cell</span>
+              <input className={input} value={transaction.cell} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Mail ID</span>
-              <input value={transaction.mailId} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Mail ID</span>
+              <input className={input} value={transaction.mailId} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Bill Type</span>
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Bill Type</span>
               <select
+                className={input}
                 value={transaction.billType}
                 disabled={isReadOnly}
                 onChange={(event) => setTransaction((current) => ({ ...current, billType: event.target.value }))}
@@ -553,40 +563,41 @@ export default function TransactionScreen({ type, onClose }) {
                 <option value="upi">UPI</option>
               </select>
             </label>
-            <label className="transaction-field">
-              <span>Invoice Number</span>
-              <input value={transaction.invoiceNo} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Invoice Number</span>
+              <input className={input} value={transaction.invoiceNo} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Feed No</span>
-              <input value={transaction.feedNo} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Feed No</span>
+              <input className={input} value={transaction.feedNo} readOnly />
             </label>
           </div>
 
-          <div className="transaction-items-heading">
-            <h2>Items</h2>
-            <span>{transaction.lines.filter((line) => line.itemCode || line.itemName).length} rows</span>
+          <div className="my-2 flex items-center justify-between">
+            <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Items</h2>
+            <span className="text-xs text-[#85918b]">{transaction.lines.filter((line) => line.itemCode || line.itemName).length} rows</span>
           </div>
-          <div className="transaction-table-wrap">
-            <table className="transaction-table">
+          <div className="overflow-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Item Code</th>
-                  <th>Item Name</th>
-                  <th>Price</th>
-                  <th>Qty</th>
-                  <th>Free</th>
-                  <th>Exp Yr</th>
-                  <th>Exp Month</th>
-                  <th>Amount</th>
-                  {!isReadOnly && <th className="transaction-action-column">Action</th>}
+                  <th className={`${tableHeader} min-w-[115px]`}>Item Code</th>
+                  <th className={`${tableHeader} min-w-[150px]`}>Item Name</th>
+                  <th className={tableHeader}>Price</th>
+                  <th className={tableHeader}>Qty</th>
+                  <th className={tableHeader}>Free</th>
+                  <th className={tableHeader}>Exp Yr</th>
+                  <th className={tableHeader}>Exp Month</th>
+                  <th className={tableHeader}>Amount</th>
+                  {!isReadOnly && <th className={`${tableHeader} print:hidden`}>Action</th>}
                 </tr>
               </thead>
               <tbody>
                 {transaction.lines.map((line, index) => (
-                  <tr key={`${line.id || "new"}-${index}`}>
-                    <td>
+                  <tr className="text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]" key={`${line.id || "new"}-${index}`}>
+                    <td className={`${tableCell} min-w-[115px]`}>
                       <input
+                        className={input}
                         list={`transaction-items-${type}`}
                         value={line.itemCode}
                         readOnly={isReadOnly}
@@ -596,8 +607,9 @@ export default function TransactionScreen({ type, onClose }) {
                         aria-label={`Item code row ${index + 1}`}
                       />
                     </td>
-                    <td>
+                    <td className={`${tableCell} min-w-[150px]`}>
                       <input
+                        className={input}
                         value={line.itemName}
                         readOnly={isReadOnly || Boolean(line.itemCode)}
                         maxLength={200}
@@ -606,8 +618,9 @@ export default function TransactionScreen({ type, onClose }) {
                       />
                     </td>
                     {["price", "qty", "free", "expYear", "expMonth"].map((field) => (
-                      <td key={field}>
+                      <td className={tableCell} key={field}>
                         <input
+                          className={input}
                           type="number"
                           min="0"
                           step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
@@ -618,12 +631,12 @@ export default function TransactionScreen({ type, onClose }) {
                         />
                       </td>
                     ))}
-                    <td className="transaction-amount-cell">{lineAmount(line).toFixed(2)}</td>
+                    <td className={`${tableCell} text-right tabular-nums`}>{lineAmount(line).toFixed(2)}</td>
                     {!isReadOnly && (
-                      <td className="transaction-action-column">
+                      <td className={`${tableCell} print:hidden`}>
                         <button
                           type="button"
-                          className="transaction-remove-line"
+                          className="h-7 w-7 rounded border border-[#f0d7d4] bg-white text-[17px] text-[#a8403a]"
                           aria-label={`Remove item row ${index + 1}`}
                           onClick={() => setTransaction((current) => {
                             const lines = current.lines.length === 1
@@ -646,11 +659,11 @@ export default function TransactionScreen({ type, onClose }) {
                   </tr>
                 ))}
                 {!isReadOnly && (
-                  <tr className="transaction-add-row">
-                    <td colSpan="9">
+                  <tr className="print:hidden">
+                    <td className={tableCell} colSpan="9">
                       <button
                         type="button"
-                        className="transaction-add-line"
+                        className="py-1 text-xs font-semibold text-[#23734f]"
                         onClick={() => setTransaction((current) => ({ ...current, lines: [...current.lines, emptyLine()] }))}
                       >
                         + Add item row
@@ -667,90 +680,90 @@ export default function TransactionScreen({ type, onClose }) {
             ))}
           </datalist>
 
-          <div className="transaction-footer">
-            <label className="transaction-field">
-              <span>Dis%</span>
-              <input type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
+          <div className="ml-auto my-[17px] mb-5 grid grid-cols-4 gap-3 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Dis%</span>
+              <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
             </label>
-            <label className="transaction-field">
-              <span>Dis Amt</span>
-              <input type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Dis Amt</span>
+              <input className={input} type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
             </label>
-            <label className="transaction-field">
-              <span>Schamt</span>
-              <input type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Schamt</span>
+              <input className={input} type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
             </label>
-            <label className="transaction-field">
-              <span>CGST</span>
-              <input type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>CGST</span>
+              <input className={input} type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
             </label>
-            <label className="transaction-field">
-              <span>SGST</span>
-              <input type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>SGST</span>
+              <input className={input} type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
             </label>
-            <label className="transaction-field">
-              <span>Total GST</span>
-              <input value={gstTotal.toFixed(2)} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Total GST</span>
+              <input className={input} value={gstTotal.toFixed(2)} readOnly />
             </label>
-            <label className="transaction-field transaction-net-field">
-              <span>Net Amt</span>
-              <input value={netAmount.toFixed(2)} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Net Amt</span>
+              <input className={`${input} font-bold text-[#1d704f]`} value={netAmount.toFixed(2)} readOnly />
             </label>
-            <label className="transaction-field">
-              <span>Gross</span>
-              <input value={lineTotal.toFixed(2)} readOnly />
+            <label className="grid min-w-0 gap-1.5">
+              <span className={fieldLabel}>Gross</span>
+              <input className={input} value={lineTotal.toFixed(2)} readOnly />
             </label>
           </div>
 
-          <div className="transaction-actions" aria-label={`${config.title} actions`}>
-            <button type="button" className="transaction-button" onClick={() => startNew()} disabled={loading}>Cancel</button>
+          <div className="flex flex-wrap gap-[9px] border-b border-[#edf1ef] pb-[18px] dark:border-[#2a3931] print:hidden" aria-label={`${config.title} actions`}>
+            <button type="button" className={button} onClick={() => startNew()} disabled={loading}>Cancel</button>
             {config.hasImport && (
               <>
-                <input ref={fileInputRef} className="transaction-file-input" type="file" accept=".csv,text/csv" onChange={importCsv} />
-                <button type="button" className="transaction-button" onClick={() => fileInputRef.current?.click()} disabled={loading}>Import</button>
-                <span className="transaction-import-hint">CSV columns: itemCode, itemName, price, qty, free, expYear, expMonth, amount</span>
+                <input ref={fileInputRef} className="hidden" type="file" accept=".csv,text/csv" onChange={importCsv} />
+                <button type="button" className={button} onClick={() => fileInputRef.current?.click()} disabled={loading}>Import</button>
+                <span className="self-center text-[11px] text-[#78857f] dark:text-[#b2c0b7]">CSV columns: itemCode, itemName, price, qty, free, expYear, expMonth, amount</span>
               </>
             )}
-            <button type="button" className="transaction-button" onClick={() => setMode("edit")} disabled={!transaction.id || mode !== "view" || loading}>Edit</button>
-            <button type="button" className="transaction-button" onClick={() => window.print()} disabled={loading}>Print</button>
-            <button type="submit" className="transaction-button transaction-button-primary" disabled={mode === "view" || loading}>{loading ? "Saving..." : "Save"}</button>
-            <button type="button" className="transaction-button transaction-button-danger" onClick={removeTransaction} disabled={!transaction.id || mode !== "view" || loading}>Remove</button>
+            <button type="button" className={button} onClick={() => setMode("edit")} disabled={!transaction.id || mode !== "view" || loading}>Edit</button>
+            <button type="button" className={button} onClick={() => window.print()} disabled={loading}>Print</button>
+            <button type="submit" className={`${button} ${primaryButton}`} disabled={mode === "view" || loading}>{loading ? "Saving..." : "Save"}</button>
+            <button type="button" className={`${button} ml-auto text-[#a8403a] max-[520px]:ml-0`} onClick={removeTransaction} disabled={!transaction.id || mode !== "view" || loading}>Remove</button>
           </div>
         </form>
 
-        {error && <p className="transaction-message transaction-error" role="alert">{error}</p>}
-        {notice && <p className="transaction-message" role="status">{notice}</p>}
+        {error && <p className="mt-[14px] text-[13px] text-[#b13d36] print:hidden" role="alert">{error}</p>}
+        {notice && <p className="mt-[14px] text-[13px] text-[#23734f] print:hidden" role="status">{notice}</p>}
 
-        <div className="transaction-results">
-          <div className="transaction-items-heading">
-            <h2>{config.title} records</h2>
-            <span>{loading ? "Loading..." : `${transactions.length} shown`}</span>
+        <div className="pt-[18px] print:hidden">
+          <div className="my-2 flex items-center justify-between">
+            <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">{config.title} records</h2>
+            <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${transactions.length} shown`}</span>
           </div>
-          <div className="transaction-table-wrap">
-            <table className="transaction-table transaction-records-table">
+          <div className="overflow-auto">
+            <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
-                  <th>Invoice No.</th>
-                  <th>Feed No.</th>
-                  <th>Account</th>
-                  <th>Bill Type</th>
-                  <th>Net Amt</th>
-                  <th>Date</th>
+                  <th className={tableHeader}>Invoice No.</th>
+                  <th className={tableHeader}>Feed No.</th>
+                  <th className={tableHeader}>Account</th>
+                  <th className={tableHeader}>Bill Type</th>
+                  <th className={tableHeader}>Net Amt</th>
+                  <th className={tableHeader}>Date</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.map((row) => (
-                  <tr key={row.id} className={transaction.id === row.id ? "transaction-row-selected" : ""} onClick={() => selectTransaction(row.id)}>
-                    <td>{row.invoiceNo}</td>
-                    <td>{row.feedNo}</td>
-                    <td>{row.name}</td>
-                    <td>{row.billType}</td>
-                    <td>{numericValue(row.netAmount).toFixed(2)}</td>
-                    <td>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : ""}</td>
+                  <tr key={row.id} className={`cursor-pointer text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e] ${transaction.id === row.id ? "bg-[#f0f7f3] font-semibold text-[#1d704f] dark:bg-[#26372e]" : ""}`} onClick={() => selectTransaction(row.id)}>
+                    <td className={tableCell}>{row.invoiceNo}</td>
+                    <td className={tableCell}>{row.feedNo}</td>
+                    <td className={tableCell}>{row.name}</td>
+                    <td className={tableCell}>{row.billType}</td>
+                    <td className={tableCell}>{numericValue(row.netAmount).toFixed(2)}</td>
+                    <td className={tableCell}>{row.createdAt ? new Date(row.createdAt).toLocaleDateString() : ""}</td>
                   </tr>
                 ))}
                 {!loading && transactions.length === 0 && (
-                  <tr><td className="transaction-empty" colSpan="6">No transactions to display.</td></tr>
+                  <tr><td className="border-b border-[#edf1ef] p-6 text-center text-[#87928c] dark:border-[#2a3931]" colSpan="6">No transactions to display.</td></tr>
                 )}
               </tbody>
             </table>
