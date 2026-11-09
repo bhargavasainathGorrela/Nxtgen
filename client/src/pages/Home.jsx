@@ -138,12 +138,23 @@ export default function Home() {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
+  const [transactionWindows, setTransactionWindows] = useState([]);
+  const [activeTransactionWindow, setActiveTransactionWindow] = useState(null);
+  const [transactionPage, setTransactionPage] = useState(0);
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [activeSetting, setActiveSetting] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
   const settingsMenuRef = useRef(null);
+  const transactionWindowSequence = useRef(0);
+  const transactionZIndex = useRef(3);
   const navigate = useNavigate();
+  const transactionPageSize = 4;
+
+  useEffect(() => {
+    const lastPage = Math.max(0, Math.ceil(transactionWindows.length / transactionPageSize) - 1);
+    setTransactionPage((page) => Math.min(page, lastPage));
+  }, [transactionWindows.length]);
 
   const initials = userName
     .trim()
@@ -202,6 +213,89 @@ export default function Home() {
     setIsMainNavOpen(false);
   };
 
+  const openTransactionWindow = (type) => {
+    transactionWindowSequence.current += 1;
+    const id = `${type}-${transactionWindowSequence.current}`;
+    const offset = (transactionWindows.length % 8) * 28;
+    const width = Math.min(1180, Math.max(560, window.innerWidth * 0.82), window.innerWidth - 32);
+    const height = Math.min(660, Math.max(400, window.innerHeight - 190), window.innerHeight - 150);
+    const left = Math.max(16, Math.min((window.innerWidth - width) / 2 + offset, window.innerWidth - width - 16));
+    const top = Math.max(88, Math.min(132 + offset, window.innerHeight - height - 16));
+    transactionZIndex.current += 1;
+    setTransactionWindows((current) => [
+      ...current,
+      {
+        id,
+        type,
+        minimized: false,
+        maximized: false,
+        left,
+        top,
+        width,
+        height,
+        zIndex: transactionZIndex.current,
+      },
+    ]);
+    setActiveTransactionWindow(id);
+    setTransactionPage(Math.floor(transactionWindows.length / transactionPageSize));
+    setActiveView("transactions");
+  };
+
+  const activateTransactionWindow = (id) => {
+    transactionZIndex.current += 1;
+    setTransactionWindows((current) => current.map((window) => (
+      window.id === id
+        ? { ...window, minimized: false, zIndex: transactionZIndex.current }
+        : window
+    )));
+    setActiveTransactionWindow(id);
+    const windowIndex = transactionWindows.findIndex((window) => window.id === id);
+    if (windowIndex >= 0) setTransactionPage(Math.floor(windowIndex / transactionPageSize));
+    setActiveView("transactions");
+  };
+
+  const updateTransactionWindow = (id, changes) => {
+    setTransactionWindows((current) => current.map((window) => (
+      window.id === id ? { ...window, ...changes } : window
+    )));
+  };
+
+  const minimizeTransactionWindow = (id) => {
+    setTransactionWindows((current) => current.map((window) => (
+      window.id === id ? { ...window, minimized: true } : window
+    )));
+    if (activeTransactionWindow === id) {
+      const nextWindow = transactionWindows.find((window) => window.id !== id && !window.minimized);
+      setActiveTransactionWindow(nextWindow?.id || null);
+      const nextWindowIndex = transactionWindows.findIndex((window) => window.id === nextWindow?.id);
+      if (nextWindowIndex >= 0) setTransactionPage(Math.floor(nextWindowIndex / transactionPageSize));
+      if (!nextWindow) setActiveView("dashboard");
+    }
+  };
+
+  const closeTransactionWindow = (id) => {
+    const remaining = transactionWindows.filter((window) => window.id !== id);
+    setTransactionWindows(remaining);
+    if (activeTransactionWindow === id) {
+      const nextWindow = remaining.find((window) => !window.minimized);
+      setActiveTransactionWindow(nextWindow?.id || null);
+      const nextWindowIndex = remaining.findIndex((window) => window.id === nextWindow?.id);
+      if (nextWindowIndex >= 0) setTransactionPage(Math.floor(nextWindowIndex / transactionPageSize));
+      if (!nextWindow) setActiveView("dashboard");
+    }
+  };
+
+  const toggleTransactionMaximized = (id) => {
+    transactionZIndex.current += 1;
+    setTransactionWindows((current) => current.map((window) => (
+      window.id === id
+        ? { ...window, maximized: !window.maximized, zIndex: transactionZIndex.current }
+        : window
+    )));
+    setActiveTransactionWindow(id);
+    setActiveView("transactions");
+  };
+
   const handleNavigationItem = (label) => {
     const transactionViews = {
       Sale: "sale",
@@ -214,7 +308,7 @@ export default function Home() {
     } else if (label === "Items") {
       setActiveView("items");
     } else if (transactionViews[label]) {
-      setActiveView(transactionViews[label]);
+      openTransactionWindow(transactionViews[label]);
     }
     closeMenus();
   };
@@ -411,12 +505,50 @@ export default function Home() {
         <CustomerSuppliers />
       ) : activeView === "items" ? (
         <Items />
-      ) : ["sale", "purchase", "saleReturn", "purchaseReturn"].includes(activeView) ? (
-        <TransactionScreen
-          key={activeView}
-          type={activeView}
-          onClose={() => setActiveView("dashboard")}
-        />
+      ) : activeView === "transactions" ? (
+        <div className="transaction-workspace">
+          <div className="transaction-tabs print:hidden" aria-label="Open transaction screens">
+            <button
+              type="button"
+              className="transaction-page-button"
+              aria-label="Previous transaction screens"
+              disabled={transactionPage === 0}
+              onClick={() => setTransactionPage((page) => Math.max(0, page - 1))}
+            >
+              ‹
+            </button>
+            {transactionWindows
+              .slice(transactionPage * transactionPageSize, (transactionPage + 1) * transactionPageSize)
+              .map((window) => (
+                <button
+                  type="button"
+                  key={window.id}
+                  className={`transaction-tab ${activeTransactionWindow === window.id ? "is-active" : ""} ${window.minimized ? "is-minimized" : ""}`}
+                  aria-current={activeTransactionWindow === window.id ? "page" : undefined}
+                  onClick={() => activateTransactionWindow(window.id)}
+                >
+                  {window.type === "saleReturn" ? "Sale Return" : window.type === "purchaseReturn" ? "Purchase Return" : window.type[0].toUpperCase() + window.type.slice(1)}
+                  <span>{window.id.split("-").pop()}</span>
+                </button>
+              ))}
+            <button
+              type="button"
+              className="transaction-page-button"
+              aria-label="Next transaction screens"
+              disabled={(transactionPage + 1) * transactionPageSize >= transactionWindows.length}
+              onClick={() => setTransactionPage((page) => page + 1)}
+            >
+              ›
+            </button>
+            <button
+              type="button"
+              className="transaction-new-button"
+              onClick={() => openTransactionWindow("sale")}
+            >
+              + New Sale
+            </button>
+          </div>
+        </div>
       ) : (
       <>
       <section className="welcome-section">
@@ -472,6 +604,38 @@ export default function Home() {
         </div>
       </section>
       </>
+      )}
+      {transactionWindows.map((window) => (
+        <TransactionScreen
+          key={window.id}
+          windowId={window.id}
+          type={window.type}
+          minimized={window.minimized}
+          maximized={window.maximized}
+          isActive={activeTransactionWindow === window.id}
+          isWorkspaceActive={activeView === "transactions"}
+          geometry={window}
+          onMinimize={() => minimizeTransactionWindow(window.id)}
+          onMaximize={() => toggleTransactionMaximized(window.id)}
+          onClose={() => closeTransactionWindow(window.id)}
+          onNewWindow={openTransactionWindow}
+          onFocus={() => activateTransactionWindow(window.id)}
+          onMove={(left, top) => updateTransactionWindow(window.id, { left, top })}
+          onResize={(width, height) => updateTransactionWindow(window.id, { width, height })}
+        />
+      ))}
+      {transactionWindows.some((window) => window.minimized) && (
+        <div className="transaction-dock print:hidden" aria-label="Minimized transaction screens">
+          {transactionWindows.filter((window) => window.minimized).map((window) => (
+            <button
+              type="button"
+              key={window.id}
+              onClick={() => activateTransactionWindow(window.id)}
+            >
+              Restore {window.type === "saleReturn" ? "Sale Return" : window.type === "purchaseReturn" ? "Purchase Return" : window.type[0].toUpperCase() + window.type.slice(1)} {window.id.split("-").pop()}
+            </button>
+          ))}
+        </div>
       )}
     </main>
   );

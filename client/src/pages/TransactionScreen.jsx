@@ -7,7 +7,6 @@ const TRANSACTION_TYPES = {
   saleReturn: { title: "Sale Return", accountType: "customer", hasImport: false },
   purchaseReturn: { title: "Purchase Return", accountType: "supplier", hasImport: false },
 };
-const screen = "mx-auto w-[94%] max-w-[1320px] py-8 pb-12 max-[520px]:pt-6";
 const card = "rounded-[11px] border border-[#e9efec] bg-white p-5 shadow-[0_2px_6px_rgba(27,49,39,0.03)] dark:border-[#2a3931] dark:bg-[#1a241f] max-[520px]:p-[13px]";
 const button = "min-h-9 rounded-md border border-[#dfe7e2] bg-white px-[14px] text-xs font-semibold text-[#435149] hover:border-[#a9cdb9] hover:bg-[#f3f8f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:hover:bg-[#26372e]";
 const primaryButton = "border-[#23815c] bg-[#23815c] text-white hover:border-[#1d704f] hover:bg-[#1d704f] dark:border-[#23815c] dark:bg-[#23815c] dark:text-white";
@@ -15,6 +14,8 @@ const input = "h-9 w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px
 const fieldLabel = "text-xs font-semibold text-[#536159] dark:text-[#b2c0b7]";
 const tableHeader = "border-b border-[#edf1ef] bg-[#f7f9f8] px-[7px] py-[7px] text-left text-[10px] font-semibold uppercase tracking-[0.35px] text-[#728078] dark:border-[#2a3931] dark:bg-[#222f28] dark:text-[#9eada4]";
 const tableCell = "min-w-[78px] whitespace-nowrap border-b border-[#edf1ef] p-[7px] dark:border-[#2a3931]";
+const itemPageSize = 2;
+const recordPageSize = 2;
 
 function emptyLine() {
   return {
@@ -145,20 +146,47 @@ function parseCsv(text) {
   }).filter((line) => line.itemCode || line.itemName);
 }
 
-export default function TransactionScreen({ type, onClose }) {
+export default function TransactionScreen({
+  type,
+  windowId,
+  minimized,
+  maximized,
+  isActive,
+  isWorkspaceActive,
+  geometry,
+  onMinimize,
+  onMaximize,
+  onClose,
+  onNewWindow,
+  onFocus,
+  onMove,
+  onResize,
+}) {
   const config = TRANSACTION_TYPES[type];
+  const screenKey = `${type}-${windowId}`;
   const [accounts, setAccounts] = useState([]);
   const [items, setItems] = useState([]);
   const [transaction, setTransaction] = useState(() => emptyTransaction());
   const [transactions, setTransactions] = useState([]);
+  const [itemPage, setItemPage] = useState(0);
+  const [recordPage, setRecordPage] = useState(0);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("add");
-  const [minimized, setMinimized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef(null);
+  const pointerAction = useRef(null);
   const lineTotal = transaction.lines.reduce((sum, line) => sum + lineAmount(line), 0);
+  const itemPageCount = Math.max(1, Math.ceil(transaction.lines.length / itemPageSize));
+  const recordPageCount = Math.max(1, Math.ceil(transactions.length / recordPageSize));
+  const visibleLines = transaction.lines
+    .map((line, index) => ({ line, index }))
+    .slice(itemPage * itemPageSize, (itemPage + 1) * itemPageSize);
+  const visibleTransactions = transactions.slice(
+    recordPage * recordPageSize,
+    (recordPage + 1) * recordPageSize,
+  );
   const gstTotal = numericValue(transaction.cgst) + numericValue(transaction.sgst);
   const netAmount =
     lineTotal -
@@ -176,6 +204,7 @@ export default function TransactionScreen({ type, onClose }) {
       );
       const data = await readApiResponse(response);
       setTransactions(data.transactions);
+      setRecordPage(0);
       if (data.transactions.length === 0) setNotice(`No matching ${config.title.toLowerCase()} records.`);
     } catch (requestError) {
       setError(requestError.message || "Unable to load transactions.");
@@ -192,6 +221,7 @@ export default function TransactionScreen({ type, onClose }) {
       const response = await fetch(`${API_URL}/next-numbers?type=${type}`);
       const data = await readApiResponse(response);
       setTransaction({ ...emptyTransaction(data), ...(lines ? { lines } : {}) });
+      setItemPage(0);
       setMode("add");
       return true;
     } catch (requestError) {
@@ -201,6 +231,14 @@ export default function TransactionScreen({ type, onClose }) {
       setLoading(false);
     }
   }, [type]);
+
+  useEffect(() => {
+    setItemPage((page) => Math.min(page, Math.max(0, itemPageCount - 1)));
+  }, [itemPageCount]);
+
+  useEffect(() => {
+    setRecordPage((page) => Math.min(page, Math.max(0, recordPageCount - 1)));
+  }, [recordPageCount]);
 
   useEffect(() => {
     let active = true;
@@ -366,6 +404,7 @@ export default function TransactionScreen({ type, onClose }) {
   };
 
   const addLine = () => {
+    setItemPage(Math.floor(transaction.lines.length / itemPageSize));
     setTransaction((current) => ({ ...current, lines: [...current.lines, emptyLine()] }));
   };
 
@@ -377,6 +416,7 @@ export default function TransactionScreen({ type, onClose }) {
       const response = await fetch(`${API_URL}/${type}/${id}`);
       const data = await readApiResponse(response);
       setTransaction(data.transaction);
+      setItemPage(0);
       setMode("view");
     } catch (requestError) {
       setError(requestError.message || "Unable to load the transaction.");
@@ -451,6 +491,7 @@ export default function TransactionScreen({ type, onClose }) {
     if (!file) return;
     try {
       const lines = parseCsv(await file.text());
+      setItemPage(0);
       if (mode === "add") {
         setTransaction((current) => {
           const gross = lines.reduce((sum, line) => sum + lineAmount(line), 0);
@@ -472,33 +513,105 @@ export default function TransactionScreen({ type, onClose }) {
     }
   };
 
-  if (minimized) {
-    return (
-      <section className="mx-auto my-4 flex w-[94%] max-w-[1320px] items-center justify-end gap-2 rounded-lg border border-[#e9efec] bg-white p-3 text-[#536159] dark:border-[#2a3931] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label={`${config.title} minimized`}>
-        <span className="mr-auto text-[13px] font-semibold">{config.title} is minimized</span>
-        <button type="button" className={button} onClick={() => setMinimized(false)}>Restore</button>
-        <button type="button" className={`${button} text-[#a8403a]`} onClick={onClose}>Close</button>
-      </section>
+  const handlePointerDown = (event) => {
+    onFocus();
+    const target = event.target instanceof Element ? event.target : null;
+    if (!target) return;
+    const action = target.closest("[data-window-drag-handle]")
+      ? "move"
+      : target.closest("[data-window-resize-handle]")
+        ? "resize"
+        : null;
+    if (
+      !action
+      || maximized
+      || (action === "move" && target.closest("button, input, select, a"))
+    ) return;
+
+    pointerAction.current = {
+      action,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: geometry.left,
+      top: geometry.top,
+      width: geometry.width,
+      height: geometry.height,
+    };
+    event.currentTarget.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  };
+
+  const handlePointerMove = (event) => {
+    const action = pointerAction.current;
+    if (!action || action.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - action.startX;
+    const deltaY = event.clientY - action.startY;
+
+    if (action.action === "move") {
+      onMove(
+        Math.max(0, Math.min(action.left + deltaX, window.innerWidth - 180)),
+        Math.max(72, Math.min(action.top + deltaY, window.innerHeight - 100)),
+      );
+      return;
+    }
+
+    const maxWidth = Math.max(280, window.innerWidth - action.left - 12);
+    const maxHeight = Math.max(240, window.innerHeight - action.top - 12);
+    onResize(
+      Math.min(maxWidth, Math.max(Math.min(560, maxWidth), action.width + deltaX)),
+      Math.min(maxHeight, Math.max(Math.min(360, maxHeight), action.height + deltaY)),
     );
+  };
+
+  const handlePointerUp = (event) => {
+    if (pointerAction.current?.pointerId === event.pointerId) {
+      pointerAction.current = null;
+    }
+  };
+
+  if (minimized) {
+    return null;
   }
 
   const isReadOnly = mode === "view";
 
   return (
-    <section className={screen} aria-labelledby="transaction-title">
-      <div className="mb-[18px] flex items-start justify-between">
+    <section
+      className={`transaction-window ${maximized ? "is-maximized" : ""} ${isActive ? "is-active" : "is-inactive"}`}
+      style={{
+        display: isWorkspaceActive ? undefined : "none",
+        zIndex: geometry.zIndex,
+        ...(maximized ? {} : {
+          left: geometry.left,
+          top: geometry.top,
+          width: geometry.width,
+          height: geometry.height,
+        }),
+      }}
+      aria-labelledby={`transaction-title-${windowId}`}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
+      <div className="transaction-screen-header mb-[18px] flex items-start justify-between" data-window-drag-handle>
         <div>
           <p className="eyebrow">TRANSACTIONS</p>
-          <h1 id="transaction-title" className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">{config.title}</h1>
+          <h1 id={`transaction-title-${windowId}`} className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">{config.title}</h1>
           <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">Enter and manage {config.title.toLowerCase()} invoices.</p>
         </div>
         <div className="flex gap-[7px] print:hidden">
-          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label="Minimize screen" title="Minimize" onClick={() => setMinimized(true)}>−</button>
+          {type === "sale" && (
+            <button type="button" className={`${button} ${primaryButton}`} onClick={() => onNewWindow("sale")}>+ New Sale</button>
+          )}
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label="Minimize screen" title="Minimize" onClick={onMinimize}>−</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[15px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label={maximized ? "Restore screen size" : "Maximize screen"} title={maximized ? "Restore" : "Maximize"} onClick={onMaximize}>{maximized ? "❐" : "□"}</button>
           <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#a8403a] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f]" aria-label="Close screen" title="Close" onClick={onClose}>×</button>
         </div>
       </div>
 
-      <div className={card}>
+      <div className={`${card} transaction-card`}>
         <form
           className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-[17px] dark:border-[#2a3931] print:hidden max-[700px]:grid-cols-[minmax(0,1fr)_auto]"
           onSubmit={(event) => {
@@ -506,10 +619,10 @@ export default function TransactionScreen({ type, onClose }) {
             findTransactions(search);
           }}
         >
-          <label className={`${fieldLabel} max-[700px]:col-span-2`} htmlFor={`transaction-search-${type}`}>Find by invoice, feed no. or account</label>
+          <label className={`${fieldLabel} max-[700px]:col-span-2`} htmlFor={`transaction-search-${screenKey}`}>Find by invoice, feed no. or account</label>
           <input
             className={input}
-            id={`transaction-search-${type}`}
+            id={`transaction-search-${screenKey}`}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Enter invoice, feed number or account"
@@ -518,12 +631,12 @@ export default function TransactionScreen({ type, onClose }) {
         </form>
 
         <form onSubmit={saveTransaction}>
-          <div className="grid grid-cols-4 gap-3 py-[17px] pb-5 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
+          <div className="transaction-account-grid grid grid-cols-4 gap-3 py-[17px] pb-5 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
             <label className="grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
               <input
                 className={input}
-                list={`transaction-accounts-${type}`}
+                list={`transaction-accounts-${screenKey}`}
                 value={transaction.accountCode}
                 required
                 readOnly={isReadOnly}
@@ -532,7 +645,7 @@ export default function TransactionScreen({ type, onClose }) {
                 onBlur={resolveAccount}
                 placeholder="Select account code"
               />
-              <datalist id={`transaction-accounts-${type}`}>
+              <datalist id={`transaction-accounts-${screenKey}`}>
                 {accounts.map((account) => (
                   <option key={account.code} value={account.code}>{account.name}</option>
                 ))}
@@ -593,11 +706,15 @@ export default function TransactionScreen({ type, onClose }) {
             </label>
           </div>
 
-          <div className="my-2 flex items-center justify-between">
+          <div className="transaction-items-heading my-2 flex items-center justify-between">
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Items</h2>
-            <span className="text-xs text-[#85918b]">{transaction.lines.filter((line) => line.itemCode || line.itemName).length} rows</span>
+            <div className="flex items-center gap-2 text-xs text-[#85918b]">
+              <span>{transaction.lines.filter((line) => line.itemCode || line.itemName).length} rows · {itemPage + 1}/{itemPageCount}</span>
+              <button type="button" className={button} disabled={itemPage === 0} onClick={() => setItemPage((page) => Math.max(0, page - 1))} aria-label="Previous item rows">‹</button>
+              <button type="button" className={button} disabled={itemPage + 1 >= itemPageCount} onClick={() => setItemPage((page) => Math.min(itemPageCount - 1, page + 1))} aria-label="Next item rows">›</button>
+            </div>
           </div>
-          <div className="hidden overflow-auto min-[1024px]:block">
+          <div className="transaction-item-table hidden min-[800px]:block">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -613,12 +730,12 @@ export default function TransactionScreen({ type, onClose }) {
                 </tr>
               </thead>
               <tbody>
-                {transaction.lines.map((line, index) => (
+                {visibleLines.map(({ line, index }) => (
                   <tr className="text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]" key={`${line.id || "new"}-${index}`}>
                     <td className={`${tableCell} min-w-[115px]`}>
                       <input
                         className={input}
-                        list={`transaction-items-${type}`}
+                        list={`transaction-items-${screenKey}`}
                         value={line.itemCode}
                         readOnly={isReadOnly}
                         maxLength={50}
@@ -682,15 +799,15 @@ export default function TransactionScreen({ type, onClose }) {
               </tbody>
             </table>
           </div>
-          <div className="grid gap-3 min-[1024px]:hidden">
-            {transaction.lines.map((line, index) => (
+          <div className="transaction-lines-grid grid gap-3 min-[800px]:hidden">
+            {visibleLines.map(({ line, index }) => (
               <div className="grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]" key={`${line.id || "mobile"}-${index}`}>
                 <div className="grid min-w-0 grid-cols-2 gap-3">
                   <label className="grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Item Code</span>
                     <input
                       className={input}
-                      list={`transaction-items-${type}`}
+                      list={`transaction-items-${screenKey}`}
                       value={line.itemCode}
                       readOnly={isReadOnly}
                       maxLength={50}
@@ -759,13 +876,13 @@ export default function TransactionScreen({ type, onClose }) {
               </button>
             )}
           </div>
-          <datalist id={`transaction-items-${type}`}>
+          <datalist id={`transaction-items-${screenKey}`}>
             {items.map((item) => (
               <option key={item.code} value={item.code}>{item.name}</option>
             ))}
           </datalist>
 
-          <div className="ml-auto my-[17px] mb-5 grid grid-cols-4 gap-3 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
+          <div className="transaction-totals-grid ml-auto my-[17px] mb-5 grid grid-cols-4 gap-3 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
             <label className="grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Dis%</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
@@ -800,7 +917,7 @@ export default function TransactionScreen({ type, onClose }) {
             </label>
           </div>
 
-          <div className="flex flex-wrap gap-[9px] border-b border-[#edf1ef] pb-[18px] dark:border-[#2a3931] print:hidden" aria-label={`${config.title} actions`}>
+          <div className="transaction-actions flex flex-wrap gap-[9px] border-b border-[#edf1ef] pb-[18px] dark:border-[#2a3931] print:hidden" aria-label={`${config.title} actions`}>
             <button type="button" className={button} onClick={() => startNew()} disabled={loading}>Cancel</button>
             {config.hasImport && (
               <>
@@ -819,12 +936,16 @@ export default function TransactionScreen({ type, onClose }) {
         {error && <p className="mt-[14px] text-[13px] text-[#b13d36] print:hidden" role="alert">{error}</p>}
         {notice && <p className="mt-[14px] text-[13px] text-[#23734f] print:hidden" role="status">{notice}</p>}
 
-        <div className="pt-[18px] print:hidden">
-          <div className="my-2 flex items-center justify-between">
+        <div className="transaction-records pt-[18px] print:hidden">
+          <div className="transaction-records-heading my-2 flex items-center justify-between">
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">{config.title} records</h2>
-            <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${transactions.length} shown`}</span>
+            <div className="flex items-center gap-2 text-xs text-[#85918b]">
+              <span>{loading ? "Loading..." : `${transactions.length === 0 ? 0 : recordPage * recordPageSize + 1}-${Math.min((recordPage + 1) * recordPageSize, transactions.length)} of ${transactions.length}`}</span>
+              <button type="button" className={button} disabled={recordPage === 0} onClick={() => setRecordPage((page) => Math.max(0, page - 1))} aria-label="Previous transaction records">‹</button>
+              <button type="button" className={button} disabled={recordPage + 1 >= recordPageCount} onClick={() => setRecordPage((page) => Math.min(recordPageCount - 1, page + 1))} aria-label="Next transaction records">›</button>
+            </div>
           </div>
-          <div className="hidden overflow-auto min-[900px]:block">
+          <div className="transaction-record-table hidden min-[900px]:block">
             <table className="w-full border-collapse text-left text-xs">
               <thead>
                 <tr>
@@ -837,7 +958,7 @@ export default function TransactionScreen({ type, onClose }) {
                 </tr>
               </thead>
               <tbody>
-                {transactions.map((row) => (
+                {visibleTransactions.map((row) => (
                   <tr key={row.id} className={`cursor-pointer text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e] ${transaction.id === row.id ? "bg-[#f0f7f3] font-semibold text-[#1d704f] dark:bg-[#26372e]" : ""}`} onClick={() => selectTransaction(row.id)}>
                     <td className={tableCell}>{row.invoiceNo}</td>
                     <td className={tableCell}>{row.feedNo}</td>
@@ -853,8 +974,8 @@ export default function TransactionScreen({ type, onClose }) {
               </tbody>
             </table>
           </div>
-          <div className="grid gap-3 min-[900px]:hidden">
-            {transactions.map((row) => (
+          <div className="transaction-record-list grid gap-3 min-[900px]:hidden">
+            {visibleTransactions.map((row) => (
               <button
                 type="button"
                 key={row.id}
@@ -880,6 +1001,15 @@ export default function TransactionScreen({ type, onClose }) {
           </div>
         </div>
       </div>
+      {!maximized && (
+        <button
+          type="button"
+          className="transaction-resize-handle"
+          data-window-resize-handle
+          aria-label={`Resize ${config.title} screen`}
+          title="Drag to resize"
+        />
+      )}
     </section>
   );
 }
