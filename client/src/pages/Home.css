@@ -207,8 +207,46 @@
   background: #111a15;
 }
 
+.home-page[data-theme="dark"] .transaction-actions {
+  background: #1a241f;
+}
+
 .home-page[data-theme="dark"] .transaction-resize-handle {
   background: linear-gradient(135deg, transparent 48%, #71887b 49%, #71887b 56%, transparent 57%, transparent 66%, #71887b 67%, #71887b 74%, transparent 75%);
+}
+
+.transaction-window .transaction-inline-field {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0;
+}
+
+.transaction-window .transaction-inline-field > span {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.transaction-window .transaction-inline-field input,
+.transaction-window .transaction-inline-field select {
+  width: 100%;
+  max-width: 150px;
+  min-width: 0;
+}
+
+.transaction-search-form {
+  flex: 0 0 auto;
+  margin-bottom: 6px;
+}
+
+.transaction-search-form label {
+  font-size: 10px;
+}
+
+.transaction-search-form input {
+  max-width: 360px;
 }
 
 @media (max-width: 600px) {
@@ -293,15 +331,24 @@
       padding: 9px;
     }
 
-    .transaction-window .transaction-card > form:first-child {
+    .transaction-window .transaction-search-form {
       flex: 0 0 auto;
       padding-bottom: 6px;
       gap: 7px;
     }
 
-    .transaction-window .transaction-card > form:first-child label {
+    .transaction-window .transaction-search-form label {
       font-size: 10px;
     }
+
+    .transaction-window .transaction-entry-form {
+      flex: 0 0 auto;
+      min-height: 0;
+    }
+
+      .transaction-window .transaction-card {
+        position: relative;
+      }
 
     .transaction-window .transaction-card input.h-9,
     .transaction-window .transaction-card select.h-9 {
@@ -322,6 +369,17 @@
 
     .transaction-window .transaction-account-grid label,
     .transaction-window .transaction-totals-grid label {
+      gap: 1px;
+    }
+
+    .transaction-window .transaction-account-left,
+    .transaction-window .transaction-account-right {
+      align-content: start;
+      gap: 4px;
+    }
+
+    .transaction-window .transaction-account-left label,
+    .transaction-window .transaction-account-right label {
       gap: 1px;
     }
 
@@ -375,14 +433,30 @@
     }
 
     .transaction-window .transaction-totals-grid {
-      margin-top: 5px;
-      margin-bottom: 5px;
+      width: 50%;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin: 5px 0 5px;
+    }
+
+    .transaction-window .transaction-totals-grid .transaction-inline-field {
+      grid-template-columns: 48px minmax(0, 1fr);
+      column-gap: 0;
+    }
+
+    .transaction-window .transaction-totals-grid .transaction-inline-field input {
+      max-width: none;
     }
 
     .transaction-window .transaction-actions {
-      flex: 0 0 auto;
+      position: absolute;
+      right: 9px;
+      bottom: 5px;
+      left: 9px;
+      z-index: 3;
       gap: 5px;
-      padding-bottom: 6px;
+      border: 0;
+      background: #fff;
+      padding: 5px 0 0;
     }
 
     .transaction-window .transaction-actions .min-h-9 {
@@ -396,7 +470,7 @@
       flex: 1 1 auto;
       min-height: 0;
       overflow: hidden;
-      padding-top: 5px;
+      padding: 5px 0 38px;
     }
 
     .transaction-window .transaction-record-table {

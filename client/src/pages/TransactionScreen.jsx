@@ -171,6 +171,7 @@ export default function TransactionScreen({
   const [itemPage, setItemPage] = useState(0);
   const [recordPage, setRecordPage] = useState(0);
   const [search, setSearch] = useState("");
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [mode, setMode] = useState("add");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -602,6 +603,15 @@ export default function TransactionScreen({
           <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">Enter and manage {config.title.toLowerCase()} invoices.</p>
         </div>
         <div className="flex gap-[7px] print:hidden">
+          <button
+            type="button"
+            className={button}
+            aria-expanded={isSearchOpen}
+            aria-controls={`transaction-search-form-${screenKey}`}
+            onClick={() => setIsSearchOpen((open) => !open)}
+          >
+            Find
+          </button>
           {type === "sale" && (
             <button type="button" className={`${button} ${primaryButton}`} onClick={() => onNewWindow("sale")}>+ New Sale</button>
           )}
@@ -612,98 +622,103 @@ export default function TransactionScreen({
       </div>
 
       <div className={`${card} transaction-card`}>
-        <form
-          className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-[17px] dark:border-[#2a3931] print:hidden max-[700px]:grid-cols-[minmax(0,1fr)_auto]"
-          onSubmit={(event) => {
-            event.preventDefault();
-            findTransactions(search);
-          }}
-        >
-          <label className={`${fieldLabel} max-[700px]:col-span-2`} htmlFor={`transaction-search-${screenKey}`}>Find by invoice, feed no. or account</label>
-          <input
-            className={input}
-            id={`transaction-search-${screenKey}`}
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Enter invoice, feed number or account"
-          />
-          <button className={`${button} ${primaryButton}`} type="submit" disabled={loading}>Find</button>
-        </form>
+        {isSearchOpen && (
+          <form
+            id={`transaction-search-form-${screenKey}`}
+            className="transaction-search-form grid grid-cols-[auto_minmax(120px,1fr)_auto] items-center gap-2 border-b border-[#edf1ef] pb-2 dark:border-[#2a3931] print:hidden max-[700px]:grid-cols-[minmax(0,1fr)_auto]"
+            onSubmit={(event) => {
+              event.preventDefault();
+              findTransactions(search);
+            }}
+          >
+            <label className={`${fieldLabel} max-[700px]:col-span-2`} htmlFor={`transaction-search-${screenKey}`}>Find by invoice, feed no. or account</label>
+            <input
+              className={input}
+              id={`transaction-search-${screenKey}`}
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Invoice, feed no. or account"
+            />
+            <button className={`${button} ${primaryButton}`} type="submit" disabled={loading}>Search</button>
+          </form>
+        )}
 
-        <form onSubmit={saveTransaction}>
-          <div className="transaction-account-grid grid grid-cols-4 gap-3 py-[17px] pb-5 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
-              <input
-                className={input}
-                list={`transaction-accounts-${screenKey}`}
-                value={transaction.accountCode}
-                required
-                readOnly={isReadOnly}
-                maxLength={50}
-                onChange={(event) => selectAccount(event.target.value)}
-                onBlur={resolveAccount}
-                placeholder="Select account code"
-              />
-              <datalist id={`transaction-accounts-${screenKey}`}>
-                {accounts.map((account) => (
-                  <option key={account.code} value={account.code}>{account.name}</option>
-                ))}
-              </datalist>
-            </label>
-            <label className="grid min-w-0 gap-1.5 max-[800px]:col-span-2 max-[520px]:col-span-1">
-              <span className={fieldLabel}>Name</span>
-              <input className={input} value={transaction.name} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Door No</span>
-              <input className={input} value={transaction.doorNo} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Street</span>
-              <input className={input} value={transaction.street} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Area</span>
-              <input className={input} value={transaction.area} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>City</span>
-              <input className={input} value={transaction.city} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Phone</span>
-              <input className={input} value={transaction.phone} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Cell</span>
-              <input className={input} value={transaction.cell} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Mail ID</span>
-              <input className={input} value={transaction.mailId} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Bill Type</span>
-              <select
-                className={input}
-                value={transaction.billType}
-                disabled={isReadOnly}
-                onChange={(event) => setTransaction((current) => ({ ...current, billType: event.target.value }))}
-              >
-                <option value="cash">Cash</option>
-                <option value="credit">Credit</option>
-                <option value="upi">UPI</option>
-              </select>
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Invoice Number</span>
-              <input className={input} value={transaction.invoiceNo} readOnly />
-            </label>
-            <label className="grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Feed No</span>
-              <input className={input} value={transaction.feedNo} readOnly />
-            </label>
+        <form className="transaction-entry-form" onSubmit={saveTransaction}>
+          <div className="transaction-account-grid grid grid-cols-2 gap-3 py-[17px] pb-5 max-[520px]:grid-cols-1">
+            <div className="transaction-account-left grid min-w-0 gap-1.5">
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
+                <input
+                  className={input}
+                  list={`transaction-accounts-${screenKey}`}
+                  value={transaction.accountCode}
+                  required
+                  readOnly={isReadOnly}
+                  maxLength={50}
+                  onChange={(event) => selectAccount(event.target.value)}
+                  onBlur={resolveAccount}
+                  placeholder="Select account code"
+                />
+                <datalist id={`transaction-accounts-${screenKey}`}>
+                  {accounts.map((account) => (
+                    <option key={account.code} value={account.code}>{account.name}</option>
+                  ))}
+                </datalist>
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Name</span>
+                <input className={input} value={transaction.name} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Cell</span>
+                <input className={input} value={transaction.cell} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>City</span>
+                <input className={input} value={transaction.city} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Area</span>
+                <input className={input} value={transaction.area} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Street</span>
+                <input className={input} value={transaction.street} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>D.No</span>
+                <input className={input} value={transaction.doorNo} readOnly />
+              </label>
+            </div>
+            <div className="transaction-account-right grid min-w-0 content-start gap-1.5">
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Bill Type</span>
+                <select
+                  className={input}
+                  value={transaction.billType}
+                  disabled={isReadOnly}
+                  onChange={(event) => setTransaction((current) => ({ ...current, billType: event.target.value }))}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="credit">Credit</option>
+                  <option value="upi">UPI</option>
+                </select>
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Feed No</span>
+                <input className={input} value={transaction.feedNo} readOnly />
+              </label>
+              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                <span className={fieldLabel}>Date</span>
+                <input
+                  className={input}
+                  value={transaction.createdAt
+                    ? new Date(transaction.createdAt).toLocaleDateString()
+                    : new Date().toLocaleDateString()}
+                  readOnly
+                />
+              </label>
+            </div>
           </div>
 
           <div className="transaction-items-heading my-2 flex items-center justify-between">
@@ -882,36 +897,36 @@ export default function TransactionScreen({
             ))}
           </datalist>
 
-          <div className="transaction-totals-grid ml-auto my-[17px] mb-5 grid grid-cols-4 gap-3 max-[800px]:grid-cols-2 max-[520px]:grid-cols-1">
-            <label className="grid min-w-0 gap-1.5">
+          <div className="transaction-totals-grid my-[17px] mb-5 grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Dis%</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Dis Amt</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Schamt</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>CGST</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>SGST</span>
               <input className={input} type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Total GST</span>
               <input className={input} value={gstTotal.toFixed(2)} readOnly />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Net Amt</span>
               <input className={`${input} font-bold text-[#1d704f]`} value={netAmount.toFixed(2)} readOnly />
             </label>
-            <label className="grid min-w-0 gap-1.5">
+            <label className="transaction-inline-field grid min-w-0 gap-1.5">
               <span className={fieldLabel}>Gross</span>
               <input className={input} value={lineTotal.toFixed(2)} readOnly />
             </label>

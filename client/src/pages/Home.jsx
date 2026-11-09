@@ -219,11 +219,17 @@ export default function Home() {
     setIsMainNavOpen(false);
   };
 
+  const getTransactionScreenNumber = (targetWindow) => (
+    transactionWindows
+      .filter((window) => window.type === targetWindow.type)
+      .findIndex((window) => window.id === targetWindow.id) + 1
+  );
+
   const openTransactionWindow = (type) => {
     transactionWindowSequence.current += 1;
     const id = `${type}-${transactionWindowSequence.current}`;
     const offset = (transactionWindows.length % 8) * 28;
-    const width = Math.min(1180, Math.max(560, window.innerWidth * 0.82), window.innerWidth - 32);
+    const width = Math.min(900, Math.max(520, window.innerWidth * 0.5), window.innerWidth - 32);
     const height = Math.min(660, Math.max(400, window.innerHeight - 190), window.innerHeight - 150);
     const left = Math.max(16, Math.min((window.innerWidth - width) / 2 + offset, window.innerWidth - width - 16));
     const top = Math.max(88, Math.min(132 + offset, window.innerHeight - height - 16));
@@ -534,7 +540,7 @@ export default function Home() {
                   onClick={() => activateTransactionWindow(window.id)}
                 >
                   {window.type === "saleReturn" ? "Sale Return" : window.type === "purchaseReturn" ? "Purchase Return" : window.type[0].toUpperCase() + window.type.slice(1)}
-                  <span>{window.id.split("-").pop()}</span>
+                  <span>{getTransactionScreenNumber(window)}</span>
                 </button>
               ))}
             <button
@@ -638,7 +644,7 @@ export default function Home() {
               key={window.id}
               onClick={() => activateTransactionWindow(window.id)}
             >
-              Restore {window.type === "saleReturn" ? "Sale Return" : window.type === "purchaseReturn" ? "Purchase Return" : window.type[0].toUpperCase() + window.type.slice(1)} {window.id.split("-").pop()}
+              Restore {window.type === "saleReturn" ? "Sale Return" : window.type === "purchaseReturn" ? "Purchase Return" : window.type[0].toUpperCase() + window.type.slice(1)} {getTransactionScreenNumber(window)}
             </button>
           ))}
         </div>
