@@ -131,6 +131,12 @@ export default function Home() {
   const [userName] = useState(
     () => localStorage.getItem(USER_STORAGE_KEY) || "Guest",
   );
+  const [greeting] = useState(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 17) return "Good afternoon";
+    return "Good evening";
+  });
   const [isDarkMode, setIsDarkMode] = useState(
     () => localStorage.getItem("stockwise-theme") === "dark",
   );
@@ -554,7 +560,7 @@ export default function Home() {
       <section className="welcome-section">
         <div>
           <p className="eyebrow">OVERVIEW</p>
-          <h1>Good morning, {userName}</h1>
+          <h1>{greeting}, {userName}</h1>
           <p className="welcome-copy">Here&apos;s what&apos;s happening with your business today.</p>
         </div>
         <button className="primary-button" type="button">
