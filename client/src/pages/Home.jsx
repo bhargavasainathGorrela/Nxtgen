@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CustomerSuppliers from "./CustomerSuppliers";
+import FirmDetails from "./FirmDetails";
 import Items from "./Items";
 import TransactionScreen from "./TransactionScreen";
 import "./Home.css";
@@ -187,6 +188,7 @@ export default function Home() {
   const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const [accountWindow, setAccountWindow] = useState(null);
+  const [firmDetailsWindow, setFirmDetailsWindow] = useState(null);
   const [transactionWindows, setTransactionWindows] = useState([]);
   const [activeTransactionWindow, setActiveTransactionWindow] = useState(null);
   const [transactionPage, setTransactionPage] = useState(0);
@@ -241,6 +243,38 @@ export default function Home() {
     const nextIsDarkMode = !isDarkMode;
     localStorage.setItem("stockwise-theme", nextIsDarkMode ? "dark" : "light");
     setIsDarkMode(nextIsDarkMode);
+  };
+
+  const openFirmDetails = () => {
+    transactionZIndex.current += 1;
+    setFirmDetailsWindow((current) => ({
+      minimized: false,
+      maximized: current?.maximized || false,
+      zIndex: transactionZIndex.current,
+    }));
+    setIsSettingsMenuOpen(false);
+  };
+
+  const minimizeFirmDetails = () => {
+    setFirmDetailsWindow((current) => current && ({ ...current, minimized: true }));
+  };
+
+  const toggleFirmDetailsMaximized = () => {
+    transactionZIndex.current += 1;
+    setFirmDetailsWindow((current) => current && ({
+      ...current,
+      maximized: !current.maximized,
+      zIndex: transactionZIndex.current,
+    }));
+  };
+
+  const activateFirmDetails = () => {
+    transactionZIndex.current += 1;
+    setFirmDetailsWindow((current) => current && ({
+      ...current,
+      minimized: false,
+      zIndex: transactionZIndex.current,
+    }));
   };
 
   const toggleSection = (sectionLabel) => {
@@ -471,7 +505,10 @@ export default function Home() {
                     }`}
                     type="button"
                     key={setting}
-                    onClick={() => setActiveSetting(setting)}
+                    onClick={() => {
+                      setActiveSetting(setting);
+                      if (setting === "Firm Details") openFirmDetails();
+                    }}
                   >
                     {setting}
                   </button>
@@ -746,6 +783,17 @@ export default function Home() {
           onFocus={activateAccountWindow}
         />
       )}
+      {firmDetailsWindow && (
+        <FirmDetails
+          minimized={firmDetailsWindow.minimized}
+          maximized={firmDetailsWindow.maximized}
+          zIndex={firmDetailsWindow.zIndex}
+          onMinimize={minimizeFirmDetails}
+          onMaximize={toggleFirmDetailsMaximized}
+          onClose={() => setFirmDetailsWindow(null)}
+          onFocus={activateFirmDetails}
+        />
+      )}
       {transactionWindows.map((window) => (
         <TransactionScreen
           key={window.id}
@@ -765,8 +813,13 @@ export default function Home() {
           onResize={(width, height) => updateTransactionWindow(window.id, { width, height })}
         />
       ))}
-      {(accountWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
+      {(accountWindow?.minimized || firmDetailsWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
         <div className="transaction-dock print:hidden" aria-label="Minimized transaction screens">
+          {firmDetailsWindow?.minimized && (
+            <button type="button" onClick={activateFirmDetails}>
+              Restore Firm Details
+            </button>
+          )}
           {accountWindow?.minimized && (
             <button type="button" onClick={activateAccountWindow}>
               Restore Customers / Suppliers
