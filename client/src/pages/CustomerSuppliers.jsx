@@ -45,7 +45,6 @@ const fields = [
   { name: "cell", label: "Cell", type: "tel" },
   { name: "mailid", label: "Mail ID", type: "email" },
 ];
-const screen = "mx-auto w-[89%] max-w-[1120px] py-10 pb-14 max-[520px]:pt-[30px]";
 const card = "rounded-[11px] border border-[#e9efec] bg-white p-[22px] shadow-[0_2px_6px_rgba(27,49,39,0.03)] dark:border-[#2a3931] dark:bg-[#1a241f] max-[520px]:p-[15px]";
 const input = "h-[38px] w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px-[10px] text-[13px] text-[#27372f] outline-none focus:border-[#3a9a70] focus:ring-[3px] focus:ring-[#3a9a70]/[0.12] read-only:bg-[#f7f9f8] read-only:text-[#69766f] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:read-only:bg-[#222f28]";
 const button = "min-h-9 rounded-md border border-[#dfe7e2] bg-white px-[14px] text-xs font-semibold text-[#435149] hover:border-[#a9cdb9] hover:bg-[#f3f8f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:hover:bg-[#26372e]";
@@ -54,7 +53,16 @@ const fieldLabel = "text-xs font-semibold text-[#536159] dark:text-[#b2c0b7]";
 const tableHeader = "border-b border-[#edf1ef] bg-[#f7f9f8] px-3 py-[11px] text-left text-[11px] font-semibold uppercase tracking-[0.4px] text-[#728078] dark:border-[#2a3931] dark:bg-[#222f28] dark:text-[#9eada4]";
 const tableCell = "whitespace-nowrap border-b border-[#edf1ef] px-3 py-[11px] text-left dark:border-[#2a3931]";
 
-export default function CustomerSuppliers() {
+export default function CustomerSuppliers({
+  minimized,
+  maximized,
+  isWorkspaceActive,
+  geometry,
+  onMinimize,
+  onMaximize,
+  onClose,
+  onFocus,
+}) {
   const [accounts, setAccounts] = useState([]);
   const [account, setAccount] = useState(emptyAccount);
   const [search, setSearch] = useState("");
@@ -160,16 +168,35 @@ export default function CustomerSuppliers() {
   const isReadOnly = mode === "view";
 
   return (
-    <section className={screen} aria-labelledby="accounts-title">
-      <div className="mb-[22px]">
+    <section
+      className={`transaction-window accounts-window ${maximized ? "is-maximized" : ""} ${isWorkspaceActive ? "is-active" : "is-inactive"}`}
+      style={{
+        display: minimized || !isWorkspaceActive ? "none" : undefined,
+        zIndex: geometry.zIndex,
+        ...(maximized ? {} : {
+          left: geometry.left,
+          top: geometry.top,
+          width: geometry.width,
+          height: geometry.height,
+        }),
+      }}
+      aria-labelledby="accounts-title"
+      onPointerDown={onFocus}
+    >
+      <div className="transaction-screen-header accounts-screen-header mb-[18px] flex items-start justify-between">
         <div>
           <p className="eyebrow">MASTERS</p>
           <h1 id="accounts-title" className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">Customers / Suppliers</h1>
           <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">Manage customer and supplier account details.</p>
         </div>
+        <div className="flex gap-[7px] print:hidden">
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label="Minimize screen" title="Minimize" onClick={onMinimize}>−</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[15px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label={maximized ? "Restore screen size" : "Maximize screen"} title={maximized ? "Restore" : "Maximize"} onClick={onMaximize}>{maximized ? "❐" : "□"}</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#a8403a] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f]" aria-label="Close screen" title="Close" onClick={onClose}>×</button>
+        </div>
       </div>
 
-      <div className={card}>
+      <div className={`${card} transaction-card accounts-card`}>
         <form
           className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-5 dark:border-[#2a3931] max-[520px]:grid-cols-[1fr_auto]"
           onSubmit={(event) => {
@@ -274,7 +301,7 @@ export default function CustomerSuppliers() {
         {error && <p className="mt-[14px] text-[13px] text-[#b13d36]" role="alert">{error}</p>}
         {notice && <p className="mt-[14px] text-[13px] text-[#23734f]" role="status">{notice}</p>}
 
-        <div className="pt-5">
+        <div className="accounts-list pt-5">
           <div className="mb-[11px] flex items-center justify-between">
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Customer / Supplier list</h2>
             <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${accounts.length} shown`}</span>

@@ -105,6 +105,18 @@
   box-shadow: 0 14px 40px rgba(27, 49, 39, 0.22);
 }
 
+.accounts-window {
+  max-width: 900px;
+}
+
+.accounts-window.is-active {
+  box-shadow: 0 14px 40px rgba(27, 49, 39, 0.22);
+}
+
+.accounts-window.is-maximized {
+  max-width: none;
+}
+
 .transaction-screen-header[data-window-drag-handle] {
   cursor: grab;
   user-select: none;
@@ -234,6 +246,132 @@
   width: 100%;
   max-width: 150px;
   min-width: 0;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid {
+  column-gap: 0;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-inline-field input,
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-inline-field select {
+  max-width: none;
+}
+
+.transaction-sale-item-table {
+  overflow-x: auto;
+}
+
+.transaction-sale-item-table th,
+.transaction-sale-item-table td {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #dfe7e2;
+}
+
+.home-page[data-theme="dark"] .transaction-sale-item-table th,
+.home-page[data-theme="dark"] .transaction-sale-item-table td {
+  border-color: #38483f;
+}
+
+.transaction-window .transaction-sale-grid-input {
+  height: 100%;
+  min-height: 25px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 3px 5px;
+  box-shadow: none;
+}
+
+.transaction-window .transaction-sale-grid-input:focus {
+  border: 0;
+  outline: 1px solid #3a9a70;
+  outline-offset: -1px;
+  box-shadow: none;
+}
+
+.transaction-window .transaction-sale-grid-input::-webkit-inner-spin-button,
+.transaction-window .transaction-sale-grid-input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.transaction-window .transaction-sale-grid-input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.transaction-window .transaction-sale-grid-input[list]::-webkit-calendar-picker-indicator,
+.transaction-window .transaction-sale-grid-input[list]::-webkit-list-button {
+  display: none !important;
+  opacity: 0;
+}
+
+.transaction-column-resizer {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  z-index: 1;
+  width: 7px;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.transaction-column-resizer:focus-visible {
+  outline: 2px solid #23815c;
+  outline-offset: -2px;
+}
+
+.transaction-sale-item-table th {
+  user-select: none;
+}
+
+.transaction-sale-lines-grid .transaction-sale-line-card {
+  gap: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  overflow: hidden;
+  padding: 0;
+}
+
+.transaction-sale-line-card .transaction-sale-line-fields {
+  grid-column: 1 / -1;
+  gap: 0;
+  border-bottom: 1px solid #dfe7e2;
+}
+
+.home-page[data-theme="dark"] .transaction-sale-line-card .transaction-sale-line-fields {
+  border-color: #38483f;
+}
+
+.transaction-sale-line-card label,
+.transaction-sale-line-card > .grid:not(.transaction-sale-line-fields) {
+  min-height: 52px;
+  gap: 2px;
+  border-right: 1px solid #dfe7e2;
+  border-bottom: 1px solid #dfe7e2;
+  padding: 6px 8px;
+}
+
+.home-page[data-theme="dark"] .transaction-sale-line-card label,
+.home-page[data-theme="dark"] .transaction-sale-line-card > .grid:not(.transaction-sale-line-fields) {
+  border-color: #38483f;
+}
+
+.transaction-sale-line-card .transaction-sale-line-fields label:nth-child(2n),
+.transaction-sale-line-card > label:nth-of-type(2n) {
+  border-right: 0;
+}
+
+.transaction-sale-line-card .transaction-sale-line-fields .transaction-sale-grid-input {
+  padding-left: 0;
+}
+
+.transaction-sale-line-card > button {
+  grid-column: 1 / -1;
+  margin: 6px;
 }
 
 .transaction-search-form {
@@ -438,6 +576,17 @@
       margin: 5px 0 5px;
     }
 
+    .accounts-window .accounts-card {
+      flex: 1 1 auto;
+      min-height: 0;
+    }
+
+    .accounts-window .accounts-list {
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: auto;
+    }
+
     .transaction-window .transaction-totals-grid .transaction-inline-field {
       grid-template-columns: 48px minmax(0, 1fr);
       column-gap: 0;
@@ -591,6 +740,12 @@
   display: none;
 }
 
+.nav-section-icon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
 .nav-dropdown summary:hover,
 .nav-dropdown[open] summary {
   color: #1d7653;
@@ -630,6 +785,12 @@
   max-height: min(70vh, 480px);
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dropdown-menu-scrollable::-webkit-scrollbar {
+  display: none;
 }
 
 .dropdown-menu a,

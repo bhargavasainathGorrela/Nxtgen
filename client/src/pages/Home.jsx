@@ -18,6 +18,7 @@ const settingsItems = [
 const navigation = [
   {
     label: "Inventory",
+    icon: "inventory",
     items: [
       { label: "Sale" },
       { label: "Purchase" },
@@ -36,6 +37,7 @@ const navigation = [
   },
   {
     label: "Accounts",
+    icon: "accounts",
     items: [
       "Customers",
       "Suppliers",
@@ -64,10 +66,12 @@ const navigation = [
   },
   {
     label: "Reports",
+    icon: "reports",
     items: ["Stock summary", "Sales report", "Purchase report", "Transactions"],
   },
   {
     label: "Masters",
+    icon: "masters",
     items: [
       "Stock",
       "Items",
@@ -91,6 +95,7 @@ const navigation = [
   },
   {
     label: "Tools",
+    icon: "tools",
     items: [
       "Backup",
       "WhatsApp/Mail",
@@ -115,6 +120,7 @@ const navigation = [
   },
   {
     label: "Automation",
+    icon: "automation",
     items: [
       "Invoice Export",
       "Profit Orders",
@@ -126,6 +132,42 @@ const navigation = [
     ],
   },
 ];
+
+const navigationIcons = {
+  inventory: (
+    <>
+      <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" />
+      <path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12v8.5M8 5.3l8 4.5" />
+    </>
+  ),
+  accounts: (
+    <>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 5.5a3.5 3.5 0 0 1 0 6.8M17 14a5.5 5.5 0 0 1 4.5 5.4" />
+    </>
+  ),
+  reports: (
+    <>
+      <path d="M4 20V4M4 20h17" />
+      <path d="M8 16v-4M13 16V8M18 16v-7" />
+    </>
+  ),
+  masters: (
+    <>
+      <rect x="4" y="4" width="7" height="7" rx="1" />
+      <rect x="14" y="4" width="6" height="7" rx="1" />
+      <rect x="4" y="14" width="7" height="6" rx="1" />
+      <rect x="14" y="14" width="6" height="6" rx="1" />
+    </>
+  ),
+  tools: (
+    <>
+      <path d="M14.5 6.5a5 5 0 0 0-6.7 6.7L3 18l3 3 4.8-4.8a5 5 0 0 0 6.7-6.7l-3.1 3.1-3-3 3.1-3.1Z" />
+      <path d="m16 4 4 4" />
+    </>
+  ),
+  automation: <path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z" />,
+};
 
 export default function Home() {
   const [userName] = useState(
@@ -144,6 +186,7 @@ export default function Home() {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
+  const [accountWindow, setAccountWindow] = useState(null);
   const [transactionWindows, setTransactionWindows] = useState([]);
   const [activeTransactionWindow, setActiveTransactionWindow] = useState(null);
   const [transactionPage, setTransactionPage] = useState(0);
@@ -225,14 +268,77 @@ export default function Home() {
       .findIndex((window) => window.id === targetWindow.id) + 1
   );
 
+  const openAccountWindow = () => {
+    if (accountWindow) {
+      transactionZIndex.current += 1;
+      setAccountWindow({
+        ...accountWindow,
+        minimized: false,
+        zIndex: transactionZIndex.current,
+      });
+    } else {
+      const width = Math.min(900, Math.max(520, window.innerWidth * 0.5), window.innerWidth - 32);
+      const height = Math.min(660, Math.max(400, window.innerHeight - 190), window.innerHeight - 150);
+      transactionZIndex.current += 1;
+      setAccountWindow({
+        minimized: false,
+        maximized: false,
+        left: Math.max(16, (window.innerWidth - width) / 2),
+        top: Math.max(88, Math.min(132, window.innerHeight - height - 16)),
+        width,
+        height,
+        zIndex: transactionZIndex.current,
+        returnView: activeView,
+      });
+    }
+    setActiveView("customer-suppliers");
+  };
+
+  const accountReturnView = () => (
+    accountWindow?.returnView === "transactions" &&
+    transactionWindows.some((transactionWindow) => !transactionWindow.minimized)
+      ? "transactions"
+      : accountWindow?.returnView || "dashboard"
+  );
+
+  const minimizeAccountWindow = () => {
+    setAccountWindow((current) => current && { ...current, minimized: true });
+    setActiveView(accountReturnView());
+  };
+
+  const closeAccountWindow = () => {
+    setAccountWindow(null);
+    setActiveView(accountReturnView());
+  };
+
+  const toggleAccountWindowMaximized = () => {
+    transactionZIndex.current += 1;
+    setAccountWindow((current) => current && ({
+      ...current,
+      maximized: !current.maximized,
+      zIndex: transactionZIndex.current,
+    }));
+    setActiveView("customer-suppliers");
+  };
+
+  const activateAccountWindow = () => {
+    transactionZIndex.current += 1;
+    setAccountWindow((current) => current && ({
+      ...current,
+      minimized: false,
+      zIndex: transactionZIndex.current,
+    }));
+    setActiveView("customer-suppliers");
+  };
+
   const openTransactionWindow = (type) => {
     transactionWindowSequence.current += 1;
     const id = `${type}-${transactionWindowSequence.current}`;
     const offset = (transactionWindows.length % 8) * 28;
-    const width = Math.min(900, Math.max(520, window.innerWidth * 0.5), window.innerWidth - 32);
-    const height = Math.min(660, Math.max(400, window.innerHeight - 190), window.innerHeight - 150);
+    const width = Math.min(1088, window.innerWidth * 0.8);
+    const height = Math.min(900, window.innerHeight - 130);
     const left = Math.max(16, Math.min((window.innerWidth - width) / 2 + offset, window.innerWidth - width - 16));
-    const top = Math.max(88, Math.min(132 + offset, window.innerHeight - height - 16));
+    const top = Math.max(88, Math.min(100 + offset, window.innerHeight - height - 16));
     transactionZIndex.current += 1;
     setTransactionWindows((current) => [
       ...current,
@@ -316,7 +422,7 @@ export default function Home() {
       "Purchase Return": "purchaseReturn",
     };
     if (label === "Customers/Suppliers") {
-      setActiveView("customer-suppliers");
+      openAccountWindow();
     } else if (label === "Items") {
       setActiveView("items");
     } else if (transactionViews[label]) {
@@ -415,6 +521,19 @@ export default function Home() {
                 event.preventDefault();
                 toggleSection(section.label);
               }}>
+                <svg
+                  className="nav-section-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  {navigationIcons[section.icon]}
+                </svg>
                 {section.label}
                 <span className="nav-chevron" aria-hidden="true" />
               </summary>
@@ -513,9 +632,7 @@ export default function Home() {
         </div>
       </header>
 
-      {activeView === "customer-suppliers" ? (
-        <CustomerSuppliers />
-      ) : activeView === "items" ? (
+      {activeView === "items" ? (
         <Items />
       ) : activeView === "transactions" ? (
         <div className="transaction-workspace">
@@ -617,6 +734,18 @@ export default function Home() {
       </section>
       </>
       )}
+      {accountWindow && (
+        <CustomerSuppliers
+          minimized={accountWindow.minimized}
+          maximized={accountWindow.maximized}
+          isWorkspaceActive={activeView === "customer-suppliers"}
+          geometry={accountWindow}
+          onMinimize={minimizeAccountWindow}
+          onMaximize={toggleAccountWindowMaximized}
+          onClose={closeAccountWindow}
+          onFocus={activateAccountWindow}
+        />
+      )}
       {transactionWindows.map((window) => (
         <TransactionScreen
           key={window.id}
@@ -636,8 +765,13 @@ export default function Home() {
           onResize={(width, height) => updateTransactionWindow(window.id, { width, height })}
         />
       ))}
-      {transactionWindows.some((window) => window.minimized) && (
+      {(accountWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
         <div className="transaction-dock print:hidden" aria-label="Minimized transaction screens">
+          {accountWindow?.minimized && (
+            <button type="button" onClick={activateAccountWindow}>
+              Restore Customers / Suppliers
+            </button>
+          )}
           {transactionWindows.filter((window) => window.minimized).map((window) => (
             <button
               type="button"

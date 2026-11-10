@@ -14,7 +14,7 @@ const input = "h-9 w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px
 const fieldLabel = "text-xs font-semibold text-[#536159] dark:text-[#b2c0b7]";
 const tableHeader = "border-b border-[#edf1ef] bg-[#f7f9f8] px-[7px] py-[7px] text-left text-[10px] font-semibold uppercase tracking-[0.35px] text-[#728078] dark:border-[#2a3931] dark:bg-[#222f28] dark:text-[#9eada4]";
 const tableCell = "min-w-[78px] whitespace-nowrap border-b border-[#edf1ef] p-[7px] dark:border-[#2a3931]";
-const itemPageSize = 2;
+const itemPageSize = 5;
 const recordPageSize = 2;
 
 function emptyLine() {
@@ -168,6 +168,7 @@ export default function TransactionScreen({
   const [items, setItems] = useState([]);
   const [transaction, setTransaction] = useState(() => emptyTransaction());
   const [transactions, setTransactions] = useState([]);
+  const [itemColumnWidths, setItemColumnWidths] = useState([130, 220, 90, 75, 75, 85, 95, 100, 56]);
   const [itemPage, setItemPage] = useState(0);
   const [recordPage, setRecordPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -178,6 +179,7 @@ export default function TransactionScreen({
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef(null);
   const pointerAction = useRef(null);
+  const itemColumnResize = useRef(null);
   const lineTotal = transaction.lines.reduce((sum, line) => sum + lineAmount(line), 0);
   const itemPageCount = Math.max(1, Math.ceil(transaction.lines.length / itemPageSize));
   const recordPageCount = Math.max(1, Math.ceil(transactions.length / recordPageSize));
@@ -194,6 +196,55 @@ export default function TransactionScreen({
     numericValue(transaction.discountAmount) -
     numericValue(transaction.schemeAmount) +
     gstTotal;
+  const itemColumnMinimums = [90, 120, 70, 55, 55, 70, 75, 80, 48];
+
+  const resizeItemColumn = (columnIndex, event) => {
+    if (itemColumnResize.current?.pointerId !== event.pointerId) return;
+    const { startX, startWidth } = itemColumnResize.current;
+    const nextWidth = Math.max(
+      itemColumnMinimums[columnIndex],
+      startWidth + event.clientX - startX,
+    );
+    setItemColumnWidths((widths) => widths.map((width, index) => (
+      index === columnIndex ? nextWidth : width
+    )));
+  };
+
+  const renderItemColumnResizer = (columnIndex, label) => (
+    <button
+      className="transaction-column-resizer"
+      type="button"
+      aria-label={`Resize ${label} column`}
+      onPointerDown={(event) => {
+        event.preventDefault();
+        event.currentTarget.setPointerCapture(event.pointerId);
+        itemColumnResize.current = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startWidth: itemColumnWidths[columnIndex],
+        };
+      }}
+      onPointerMove={(event) => resizeItemColumn(columnIndex, event)}
+      onPointerUp={(event) => {
+        if (itemColumnResize.current?.pointerId === event.pointerId) {
+          itemColumnResize.current = null;
+        }
+      }}
+      onPointerCancel={() => {
+        itemColumnResize.current = null;
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+        event.preventDefault();
+        const adjustment = event.key === "ArrowRight" ? 10 : -10;
+        setItemColumnWidths((widths) => widths.map((width, index) => (
+          index === columnIndex
+            ? Math.max(itemColumnMinimums[columnIndex], width + adjustment)
+            : width
+        )));
+      }}
+    />
+  );
 
   const findTransactions = useCallback(async (query = "") => {
     setLoading(true);
@@ -385,22 +436,6 @@ export default function TransactionScreen({
         return { ...current, discountPercent: 0, discountAmount: value };
       }
       return { ...current, [field]: value };
-    });
-  };
-
-  const removeLine = (index) => {
-    setTransaction((current) => {
-      const lines = current.lines.length === 1
-        ? [emptyLine()]
-        : current.lines.filter((_, lineIndex) => lineIndex !== index);
-      const gross = lines.reduce((sum, line) => sum + lineAmount(line), 0);
-      return {
-        ...current,
-        lines,
-        discountAmount: numericValue(current.discountPercent) > 0
-          ? gross * numericValue(current.discountPercent) / 100
-          : current.discountAmount,
-      };
     });
   };
 
@@ -644,7 +679,7 @@ export default function TransactionScreen({
         )}
 
         <form className="transaction-entry-form" onSubmit={saveTransaction}>
-          <div className="transaction-account-grid grid grid-cols-2 gap-3 py-[17px] pb-5 max-[520px]:grid-cols-1">
+          <div className={`transaction-account-grid grid grid-cols-2 gap-3 py-[17px] pb-5 max-[520px]:grid-cols-1${type === "sale" ? " transaction-sale-account-grid" : ""}`}>
             <div className="transaction-account-left grid min-w-0 gap-1.5">
               <label className="transaction-inline-field grid min-w-0 gap-1.5">
                 <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
@@ -690,7 +725,7 @@ export default function TransactionScreen({
                 <input className={input} value={transaction.doorNo} readOnly />
               </label>
             </div>
-            <div className="transaction-account-right grid min-w-0 content-start gap-1.5">
+              <div className="transaction-account-right grid min-w-0 content-start gap-1.5">
               <label className="transaction-inline-field grid min-w-0 gap-1.5">
                 <span className={fieldLabel}>Bill Type</span>
                 <select
@@ -718,7 +753,43 @@ export default function TransactionScreen({
                   readOnly
                 />
               </label>
-            </div>
+              {type === "sale" && (
+                <div className="transaction-account-totals grid min-w-0 grid-cols-2 gap-1.5">
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Dis%</span>
+                    <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Dis Amt</span>
+                    <input className={input} type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Schamt</span>
+                    <input className={input} type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>CGST</span>
+                    <input className={input} type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>SGST</span>
+                    <input className={input} type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Total GST</span>
+                    <input className={input} value={gstTotal.toFixed(2)} readOnly />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Net Amt</span>
+                    <input className={`${input} font-bold text-[#1d704f]`} value={netAmount.toFixed(2)} readOnly />
+                  </label>
+                  <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                    <span className={fieldLabel}>Gross</span>
+                    <input className={input} value={lineTotal.toFixed(2)} readOnly />
+                  </label>
+                </div>
+              )}
+              </div>
           </div>
 
           <div className="transaction-items-heading my-2 flex items-center justify-between">
@@ -729,27 +800,39 @@ export default function TransactionScreen({
               <button type="button" className={button} disabled={itemPage + 1 >= itemPageCount} onClick={() => setItemPage((page) => Math.min(itemPageCount - 1, page + 1))} aria-label="Next item rows">›</button>
             </div>
           </div>
-          <div className="transaction-item-table hidden min-[800px]:block">
-            <table className="w-full border-collapse text-left text-xs">
+          <div className={`transaction-item-table hidden min-[800px]:block${type === "sale" ? " transaction-sale-item-table" : ""}`}>
+            <table
+              className="w-full border-collapse text-left text-xs"
+              style={type === "sale" ? {
+                width: `max(100%, ${itemColumnWidths.slice(0, 8).reduce((sum, width) => sum + width, 0)}px)`,
+                tableLayout: "fixed",
+              } : undefined}
+            >
+              {type === "sale" && (
+                <colgroup>
+                  {itemColumnWidths.slice(0, 8).map((width, index) => (
+                    <col key={index} style={{ width }} />
+                  ))}
+                </colgroup>
+              )}
               <thead>
                 <tr>
-                  <th className={`${tableHeader} min-w-[115px]`}>Item Code</th>
-                  <th className={`${tableHeader} min-w-[150px]`}>Item Name</th>
-                  <th className={tableHeader}>Price</th>
-                  <th className={tableHeader}>Qty</th>
-                  <th className={tableHeader}>Free</th>
-                  <th className={tableHeader}>Exp Yr</th>
-                  <th className={tableHeader}>Exp Month</th>
-                  <th className={tableHeader}>Amount</th>
-                  {!isReadOnly && <th className={`${tableHeader} print:hidden`}>Action</th>}
+                  <th className={`${tableHeader} min-w-[115px]`}>Item Code{type === "sale" && renderItemColumnResizer(0, "Item Code")}</th>
+                  <th className={`${tableHeader} min-w-[150px]`}>Item Name{type === "sale" && renderItemColumnResizer(1, "Item Name")}</th>
+                  <th className={tableHeader}>Price{type === "sale" && renderItemColumnResizer(2, "Price")}</th>
+                  <th className={tableHeader}>Qty{type === "sale" && renderItemColumnResizer(3, "Quantity")}</th>
+                  <th className={tableHeader}>Free{type === "sale" && renderItemColumnResizer(4, "Free")}</th>
+                  <th className={tableHeader}>Exp Yr{type === "sale" && renderItemColumnResizer(5, "Expiry year")}</th>
+                  <th className={tableHeader}>Exp Month{type === "sale" && renderItemColumnResizer(6, "Expiry month")}</th>
+                  <th className={tableHeader}>Amount{type === "sale" && renderItemColumnResizer(7, "Amount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleLines.map(({ line, index }) => (
-                  <tr className="text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]" key={`${line.id || "new"}-${index}`}>
+                  <tr className={`text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]${type === "sale" ? " transaction-sale-item-row" : ""}`} key={`${line.id || "new"}-${index}`}>
                     <td className={`${tableCell} min-w-[115px]`}>
                       <input
-                        className={input}
+                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                         list={`transaction-items-${screenKey}`}
                         value={line.itemCode}
                         readOnly={isReadOnly}
@@ -761,7 +844,7 @@ export default function TransactionScreen({
                     </td>
                     <td className={`${tableCell} min-w-[150px]`}>
                       <input
-                        className={input}
+                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                         value={line.itemName}
                         readOnly={isReadOnly || Boolean(line.itemCode)}
                         maxLength={200}
@@ -772,7 +855,7 @@ export default function TransactionScreen({
                     {["price", "qty", "free", "expYear", "expMonth"].map((field) => (
                       <td className={tableCell} key={field}>
                         <input
-                          className={input}
+                          className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                           type="number"
                           min="0"
                           step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
@@ -784,23 +867,11 @@ export default function TransactionScreen({
                       </td>
                     ))}
                     <td className={`${tableCell} text-right tabular-nums`}>{lineAmount(line).toFixed(2)}</td>
-                    {!isReadOnly && (
-                      <td className={`${tableCell} print:hidden`}>
-                        <button
-                          type="button"
-                          className="h-7 w-7 rounded border border-[#f0d7d4] bg-white text-[17px] text-[#a8403a]"
-                          aria-label={`Remove item row ${index + 1}`}
-                          onClick={() => removeLine(index)}
-                        >
-                          ×
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 ))}
                 {!isReadOnly && (
                   <tr className="print:hidden">
-                    <td className={tableCell} colSpan="9">
+                    <td className={tableCell} colSpan="8">
                       <button
                         type="button"
                         className="py-1 text-xs font-semibold text-[#23734f]"
@@ -814,14 +885,14 @@ export default function TransactionScreen({
               </tbody>
             </table>
           </div>
-          <div className="transaction-lines-grid grid gap-3 min-[800px]:hidden">
+          <div className={`transaction-lines-grid grid gap-3 min-[800px]:hidden${type === "sale" ? " transaction-sale-lines-grid" : ""}`}>
             {visibleLines.map(({ line, index }) => (
-              <div className="grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]" key={`${line.id || "mobile"}-${index}`}>
-                <div className="grid min-w-0 grid-cols-2 gap-3">
+              <div className={`grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]${type === "sale" ? " transaction-sale-line-card" : ""}`} key={`${line.id || "mobile"}-${index}`}>
+                <div className={`grid min-w-0 grid-cols-2 gap-3${type === "sale" ? " transaction-sale-line-fields" : ""}`}>
                   <label className="grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Item Code</span>
                     <input
-                      className={input}
+                      className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                       list={`transaction-items-${screenKey}`}
                       value={line.itemCode}
                       readOnly={isReadOnly}
@@ -834,7 +905,7 @@ export default function TransactionScreen({
                   <label className="grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Item Name</span>
                     <input
-                      className={input}
+                      className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                       value={line.itemName}
                       readOnly={isReadOnly || Boolean(line.itemCode)}
                       maxLength={200}
@@ -852,7 +923,7 @@ export default function TransactionScreen({
                     <label className="grid min-w-0 gap-1.5" key={field}>
                       <span className={fieldLabel}>{label}</span>
                       <input
-                        className={input}
+                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
                         type="number"
                         min="0"
                         step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
@@ -870,15 +941,6 @@ export default function TransactionScreen({
                     </span>
                   </div>
                 </div>
-                {!isReadOnly && (
-                  <button
-                    type="button"
-                    className="min-h-9 rounded-md border border-[#f0d7d4] px-3 text-xs font-semibold text-[#a8403a]"
-                    onClick={() => removeLine(index)}
-                  >
-                    Remove item row
-                  </button>
-                )}
               </div>
             ))}
             {!isReadOnly && (
@@ -898,38 +960,42 @@ export default function TransactionScreen({
           </datalist>
 
           <div className="transaction-totals-grid my-[17px] mb-5 grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Dis%</span>
-              <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Dis Amt</span>
-              <input className={input} type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Schamt</span>
-              <input className={input} type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>CGST</span>
-              <input className={input} type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>SGST</span>
-              <input className={input} type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Total GST</span>
-              <input className={input} value={gstTotal.toFixed(2)} readOnly />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Net Amt</span>
-              <input className={`${input} font-bold text-[#1d704f]`} value={netAmount.toFixed(2)} readOnly />
-            </label>
-            <label className="transaction-inline-field grid min-w-0 gap-1.5">
-              <span className={fieldLabel}>Gross</span>
-              <input className={input} value={lineTotal.toFixed(2)} readOnly />
-            </label>
+            {type !== "sale" && (
+              <>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Dis%</span>
+                  <input className={input} type="number" min="0" step="0.01" value={transaction.discountPercent} readOnly={isReadOnly} onChange={(event) => updateTotals("discountPercent", event.target.value)} />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Dis Amt</span>
+                  <input className={input} type="number" min="0" step="0.01" value={transaction.discountAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("discountAmount", event.target.value)} />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Schamt</span>
+                  <input className={input} type="number" min="0" step="0.01" value={transaction.schemeAmount} readOnly={isReadOnly} onChange={(event) => updateTotals("schemeAmount", event.target.value)} />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>CGST</span>
+                  <input className={input} type="number" min="0" step="0.01" value={transaction.cgst} readOnly={isReadOnly} onChange={(event) => updateTotals("cgst", event.target.value)} />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>SGST</span>
+                  <input className={input} type="number" min="0" step="0.01" value={transaction.sgst} readOnly={isReadOnly} onChange={(event) => updateTotals("sgst", event.target.value)} />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Total GST</span>
+                  <input className={input} value={gstTotal.toFixed(2)} readOnly />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Net Amt</span>
+                  <input className={`${input} font-bold text-[#1d704f]`} value={netAmount.toFixed(2)} readOnly />
+                </label>
+                <label className="transaction-inline-field grid min-w-0 gap-1.5">
+                  <span className={fieldLabel}>Gross</span>
+                  <input className={input} value={lineTotal.toFixed(2)} readOnly />
+                </label>
+              </>
+            )}
           </div>
 
           <div className="transaction-actions flex flex-wrap gap-[9px] border-b border-[#edf1ef] pb-[18px] dark:border-[#2a3931] print:hidden" aria-label={`${config.title} actions`}>
