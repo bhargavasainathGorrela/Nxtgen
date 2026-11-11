@@ -20,7 +20,6 @@ const fields = [
   { name: "hsnCode", label: "HSN Code", maxLength: 50 },
   { name: "drugForm", label: "Drug Form", maxLength: 100 },
 ];
-const screen = "mx-auto w-[89%] max-w-[1120px] py-10 pb-14 max-[520px]:pt-[30px]";
 const card = "rounded-[11px] border border-[#e9efec] bg-white p-[22px] shadow-[0_2px_6px_rgba(27,49,39,0.03)] dark:border-[#2a3931] dark:bg-[#1a241f] max-[520px]:p-[15px]";
 const input = "h-[38px] w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px-[10px] text-[13px] text-[#27372f] outline-none focus:border-[#3a9a70] focus:ring-[3px] focus:ring-[#3a9a70]/[0.12] read-only:bg-[#f7f9f8] read-only:text-[#69766f] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:read-only:bg-[#222f28]";
 const button = "min-h-9 rounded-md border border-[#dfe7e2] bg-white px-[14px] text-xs font-semibold text-[#435149] hover:border-[#a9cdb9] hover:bg-[#f3f8f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:hover:bg-[#26372e]";
@@ -44,11 +43,21 @@ async function readApiResponse(response) {
   return data;
 }
 
-export default function Items() {
+export default function Items({
+  minimized,
+  maximized,
+  isWorkspaceActive,
+  geometry,
+  onMinimize,
+  onMaximize,
+  onClose,
+  onFocus,
+}) {
   const [items, setItems] = useState([]);
   const [item, setItem] = useState(emptyItem);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("view");
+  const [isFindScreen, setIsFindScreen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -151,17 +160,41 @@ export default function Items() {
   const isReadOnly = mode === "view";
 
   return (
-    <section className={screen} aria-labelledby="items-title">
-      <div className="mb-[22px]">
+    <section
+      className={`transaction-window items-window ${maximized ? "is-maximized" : ""} ${isWorkspaceActive ? "is-active" : "is-inactive"}`}
+      style={{
+        display: minimized || !isWorkspaceActive ? "none" : undefined,
+        zIndex: geometry.zIndex,
+        ...(maximized ? {} : {
+          left: geometry.left,
+          top: geometry.top,
+          width: geometry.width,
+          height: geometry.height,
+        }),
+      }}
+      aria-labelledby="items-title"
+      onPointerDown={onFocus}
+    >
+      <div className="transaction-screen-header items-screen-header mb-[18px] flex items-start justify-between">
         <div>
           <p className="eyebrow">MASTERS</p>
-          <h1 id="items-title" className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">Items</h1>
-          <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">Manage item details and product codes.</p>
+          <h1 id="items-title" className="m-0 text-[clamp(24px,3vw,30px)] font-bold tracking-[-1px] text-[#1c2b24] dark:text-[#e3ebe6]">{isFindScreen ? "Find Items" : "Items"}</h1>
+          <p className="mt-2 text-sm text-[#78857f] dark:text-[#b2c0b7]">{isFindScreen ? "Find an item by code or name." : "Manage item details and product codes."}</p>
+        </div>
+        <div className="flex gap-[7px] print:hidden">
+          {isFindScreen && (
+            <button className={button} type="button" onClick={() => setIsFindScreen(false)}>
+              Back
+            </button>
+          )}
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label="Minimize screen" title="Minimize" onClick={onMinimize}>−</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[15px] text-[#536159] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7]" aria-label={maximized ? "Restore screen size" : "Maximize screen"} title={maximized ? "Restore" : "Maximize"} onClick={onMaximize}>{maximized ? "❐" : "□"}</button>
+          <button type="button" className="grid h-[34px] w-[34px] place-items-center rounded-md border border-[#dfe7e2] bg-white text-[21px] text-[#a8403a] hover:bg-[#f3f8f5] dark:border-[#38483f] dark:bg-[#1a241f]" aria-label="Close screen" title="Close" onClick={onClose}>×</button>
         </div>
       </div>
 
-      <div className={card}>
-        <form
+      <div className={`${card} transaction-card items-card`}>
+        {isFindScreen && <form
           className="grid grid-cols-[auto_minmax(180px,1fr)_auto] items-center gap-3 border-b border-[#edf1ef] pb-5 dark:border-[#2a3931] max-[520px]:grid-cols-[1fr_auto]"
           onSubmit={(event) => {
             event.preventDefault();
@@ -179,9 +212,9 @@ export default function Items() {
           <button className={`${button} ${primaryButton}`} type="submit" disabled={loading}>
             Find
           </button>
-        </form>
+        </form>}
 
-        <form onSubmit={saveItem}>
+        {!isFindScreen && <form onSubmit={saveItem}>
           <div className="grid grid-cols-4 gap-4 py-5 max-[760px]:grid-cols-2 max-[520px]:grid-cols-1">
             {fields.map((field) => (
               <label className="grid gap-[7px]" key={field.name}>
@@ -234,7 +267,20 @@ export default function Items() {
               type="submit"
               disabled={mode === "view" || loading}
             >
-              {loading ? "Saving..." : "Save"}
+              {loading ? "Saving..." : mode === "add" ? "Add Item" : "Update Item"}
+            </button>
+            <button
+              className={button}
+              type="button"
+              onClick={() => {
+                setIsFindScreen(true);
+                setError("");
+                setNotice("");
+                findItems(search);
+              }}
+              disabled={loading}
+            >
+              Find
             </button>
             <button
               className={`${button} ml-auto text-[#a8403a] max-[520px]:ml-0`}
@@ -245,12 +291,12 @@ export default function Items() {
               Remove
             </button>
           </div>
-        </form>
+        </form>}
 
         {error && <p className="mt-[14px] text-[13px] text-[#b13d36]" role="alert">{error}</p>}
         {notice && <p className="mt-[14px] text-[13px] text-[#23734f]" role="status">{notice}</p>}
 
-        <div className="pt-5">
+        {isFindScreen && <div className="pt-5">
           <div className="mb-[11px] flex items-center justify-between">
             <h2 className="m-0 text-sm font-semibold text-[#293a31] dark:text-[#e3ebe6]">Item list</h2>
             <span className="text-xs text-[#85918b]">{loading ? "Loading..." : `${items.length} shown`}</span>
@@ -279,6 +325,7 @@ export default function Items() {
                       setMode("view");
                       setError("");
                       setNotice("");
+                      setIsFindScreen(false);
                     }}
                   >
                     <td className={tableCell}>{row.code}</td>
@@ -314,6 +361,7 @@ export default function Items() {
                   setMode("view");
                   setError("");
                   setNotice("");
+                  setIsFindScreen(false);
                 }}
               >
                 <span className="break-words font-semibold text-[#1d704f] dark:text-[#8bd1ac]">{row.code} · {row.name}</span>
@@ -326,7 +374,7 @@ export default function Items() {
               <p className="m-0 p-6 text-center text-sm text-[#87928c]">No items to display.</p>
             )}
           </div>
-        </div>
+        </div>}
       </div>
     </section>
   );

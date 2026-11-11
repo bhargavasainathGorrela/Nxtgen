@@ -109,6 +109,19 @@
   max-width: 900px;
 }
 
+.items-window {
+  max-width: 1088px;
+}
+
+.items-window.is-maximized {
+  max-width: none;
+}
+
+.transaction-window.items-window .items-card {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .accounts-window.is-active {
   box-shadow: 0 14px 40px rgba(27, 49, 39, 0.22);
 }

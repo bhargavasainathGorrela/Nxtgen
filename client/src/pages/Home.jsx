@@ -187,6 +187,7 @@ export default function Home() {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
+  const [itemsWindow, setItemsWindow] = useState(null);
   const [accountWindow, setAccountWindow] = useState(null);
   const [firmDetailsWindow, setFirmDetailsWindow] = useState(null);
   const [transactionWindows, setTransactionWindows] = useState([]);
@@ -201,6 +202,58 @@ export default function Home() {
   const transactionZIndex = useRef(3);
   const navigate = useNavigate();
   const transactionPageSize = 4;
+
+  const openItemsWindow = () => {
+    transactionZIndex.current += 1;
+    setItemsWindow((current) => {
+      if (current) {
+        return { ...current, minimized: false, zIndex: transactionZIndex.current };
+      }
+
+      const width = Math.min(1088, window.innerWidth * 0.8);
+      const height = Math.min(900, window.innerHeight - 130);
+      return {
+        minimized: false,
+        maximized: false,
+        left: Math.max(16, (window.innerWidth - width) / 2),
+        top: Math.max(88, Math.min(100, window.innerHeight - height - 16)),
+        width,
+        height,
+        zIndex: transactionZIndex.current,
+      };
+    });
+    setActiveView("items");
+  };
+
+  const minimizeItemsWindow = () => {
+    setItemsWindow((current) => current && ({ ...current, minimized: true }));
+    setActiveView("dashboard");
+  };
+
+  const toggleItemsWindowMaximized = () => {
+    transactionZIndex.current += 1;
+    setItemsWindow((current) => current && ({
+      ...current,
+      maximized: !current.maximized,
+      zIndex: transactionZIndex.current,
+    }));
+    setActiveView("items");
+  };
+
+  const activateItemsWindow = () => {
+    transactionZIndex.current += 1;
+    setItemsWindow((current) => current && ({
+      ...current,
+      minimized: false,
+      zIndex: transactionZIndex.current,
+    }));
+    setActiveView("items");
+  };
+
+  const closeItemsWindow = () => {
+    setItemsWindow(null);
+    setActiveView("dashboard");
+  };
 
   useEffect(() => {
     const lastPage = Math.max(0, Math.ceil(transactionWindows.length / transactionPageSize) - 1);
@@ -458,7 +511,7 @@ export default function Home() {
     if (label === "Customers/Suppliers") {
       openAccountWindow();
     } else if (label === "Items") {
-      setActiveView("items");
+      openItemsWindow();
     } else if (transactionViews[label]) {
       openTransactionWindow(transactionViews[label]);
     }
@@ -669,9 +722,7 @@ export default function Home() {
         </div>
       </header>
 
-      {activeView === "items" ? (
-        <Items />
-      ) : activeView === "transactions" ? (
+      {activeView === "transactions" ? (
         <div className="transaction-workspace">
           <div className="transaction-tabs print:hidden" aria-label="Open transaction screens">
             <button
@@ -776,6 +827,18 @@ export default function Home() {
           onFocus={activateAccountWindow}
         />
       )}
+      {itemsWindow && (
+        <Items
+          minimized={itemsWindow.minimized}
+          maximized={itemsWindow.maximized}
+          isWorkspaceActive={activeView === "items"}
+          geometry={itemsWindow}
+          onMinimize={minimizeItemsWindow}
+          onMaximize={toggleItemsWindowMaximized}
+          onClose={closeItemsWindow}
+          onFocus={activateItemsWindow}
+        />
+      )}
       {firmDetailsWindow && (
         <FirmDetails
           minimized={firmDetailsWindow.minimized}
@@ -806,8 +869,13 @@ export default function Home() {
           onResize={(width, height) => updateTransactionWindow(window.id, { width, height })}
         />
       ))}
-      {(accountWindow?.minimized || firmDetailsWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
+      {(itemsWindow?.minimized || accountWindow?.minimized || firmDetailsWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
         <div className="transaction-dock print:hidden" aria-label="Minimized transaction screens">
+          {itemsWindow?.minimized && (
+            <button type="button" onClick={activateItemsWindow}>
+              Restore Items
+            </button>
+          )}
           {firmDetailsWindow?.minimized && (
             <button type="button" onClick={activateFirmDetails}>
               Restore Firm Details
