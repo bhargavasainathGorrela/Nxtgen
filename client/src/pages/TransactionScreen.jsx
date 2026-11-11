@@ -700,33 +700,33 @@ export default function TransactionScreen({
                   ))}
                 </datalist>
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-name" : ""}`}>
                 <span className={fieldLabel}>Name</span>
                 <input className={input} value={transaction.name} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-cell" : ""}`}>
                 <span className={fieldLabel}>Cell</span>
                 <input className={input} value={transaction.cell} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-city" : ""}`}>
                 <span className={fieldLabel}>City</span>
                 <input className={input} value={transaction.city} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-area" : ""}`}>
                 <span className={fieldLabel}>Area</span>
                 <input className={input} value={transaction.area} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-street" : ""}`}>
                 <span className={fieldLabel}>Street</span>
                 <input className={input} value={transaction.street} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-door-no" : ""}`}>
                 <span className={fieldLabel}>D.No</span>
                 <input className={input} value={transaction.doorNo} readOnly />
               </label>
             </div>
               <div className="transaction-account-right grid min-w-0 content-start gap-1.5">
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-bill-type" : ""}`}>
                 <span className={fieldLabel}>Bill Type</span>
                 <select
                   className={input}
@@ -739,11 +739,11 @@ export default function TransactionScreen({
                   <option value="upi">UPI</option>
                 </select>
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-feed-no" : ""}`}>
                 <span className={fieldLabel}>Feed No</span>
                 <input className={input} value={transaction.feedNo} readOnly />
               </label>
-              <label className="transaction-inline-field grid min-w-0 gap-1.5">
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-date" : ""}`}>
                 <span className={fieldLabel}>Date</span>
                 <input
                   className={input}

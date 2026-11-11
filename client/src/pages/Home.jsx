@@ -706,13 +706,6 @@ export default function Home() {
             >
               ›
             </button>
-            <button
-              type="button"
-              className="transaction-new-button"
-              onClick={() => openTransactionWindow("sale")}
-            >
-              + New Sale
-            </button>
           </div>
         </div>
       ) : (

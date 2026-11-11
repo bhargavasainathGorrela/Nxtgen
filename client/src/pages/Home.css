@@ -419,6 +419,50 @@
   max-width: none;
 }
 
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-name,
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-street {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 180px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-cell {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 120px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-city,
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-area {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 140px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-door-no {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 100px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-bill-type {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 88px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-feed-no {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 88px;
+}
+
+.transaction-window .transaction-account-grid.transaction-sale-account-grid .transaction-sale-compact-date {
+  width: max-content;
+  max-width: 100%;
+  grid-template-columns: 52px 112px;
+}
+
 .transaction-sale-item-table {
   overflow-x: auto;
 }
