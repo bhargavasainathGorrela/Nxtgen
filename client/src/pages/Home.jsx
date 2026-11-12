@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import CustomerSuppliers from "./CustomerSuppliers";
 import FirmDetails from "./FirmDetails";
 import Items from "./Items";
+import MasterEntry, { masterConfigs } from "./MasterEntry";
 import TransactionScreen from "./TransactionScreen";
 import "./Home.css";
 
@@ -188,6 +189,7 @@ export default function Home() {
   const [isMainNavOpen, setIsMainNavOpen] = useState(false);
   const [activeView, setActiveView] = useState("dashboard");
   const [itemsWindow, setItemsWindow] = useState(null);
+  const [masterWindows, setMasterWindows] = useState({});
   const [accountWindow, setAccountWindow] = useState(null);
   const [firmDetailsWindow, setFirmDetailsWindow] = useState(null);
   const [transactionWindows, setTransactionWindows] = useState([]);
@@ -252,6 +254,78 @@ export default function Home() {
 
   const closeItemsWindow = () => {
     setItemsWindow(null);
+    setActiveView("dashboard");
+  };
+
+  const openMasterWindow = (masterName) => {
+    transactionZIndex.current += 1;
+    setMasterWindows((currentWindows) => {
+      const current = currentWindows[masterName];
+      if (current) {
+        return {
+          ...currentWindows,
+          [masterName]: { ...current, minimized: false, zIndex: transactionZIndex.current },
+        };
+      }
+
+      const width = Math.min(900, Math.max(520, window.innerWidth * 0.65), window.innerWidth - 32);
+      const height = Math.min(700, Math.max(240, window.innerHeight - 130));
+      return {
+        ...currentWindows,
+        [masterName]: {
+          minimized: false,
+          maximized: false,
+          left: Math.max(16, (window.innerWidth - width) / 2),
+          top: Math.max(72, Math.min(120, window.innerHeight - height - 16)),
+          width,
+          height,
+          zIndex: transactionZIndex.current,
+        },
+      };
+    });
+    setActiveView(`master:${masterName}`);
+  };
+
+  const minimizeMasterWindow = (masterName) => {
+    setMasterWindows((current) => ({
+      ...current,
+      [masterName]: { ...current[masterName], minimized: true },
+    }));
+    setActiveView("dashboard");
+  };
+
+  const toggleMasterWindowMaximized = (masterName) => {
+    transactionZIndex.current += 1;
+    setMasterWindows((current) => ({
+      ...current,
+      [masterName]: {
+        ...current[masterName],
+        maximized: !current[masterName].maximized,
+        zIndex: transactionZIndex.current,
+      },
+    }));
+    setActiveView(`master:${masterName}`);
+  };
+
+  const activateMasterWindow = (masterName) => {
+    transactionZIndex.current += 1;
+    setMasterWindows((current) => ({
+      ...current,
+      [masterName]: {
+        ...current[masterName],
+        minimized: false,
+        zIndex: transactionZIndex.current,
+      },
+    }));
+    setActiveView(`master:${masterName}`);
+  };
+
+  const closeMasterWindow = (masterName) => {
+    setMasterWindows((current) => {
+      const remainingWindows = { ...current };
+      delete remainingWindows[masterName];
+      return remainingWindows;
+    });
     setActiveView("dashboard");
   };
 
@@ -512,6 +586,8 @@ export default function Home() {
       openAccountWindow();
     } else if (label === "Items") {
       openItemsWindow();
+    } else if (masterConfigs[label]) {
+      openMasterWindow(label);
     } else if (transactionViews[label]) {
       openTransactionWindow(transactionViews[label]);
     }
@@ -839,6 +915,20 @@ export default function Home() {
           onFocus={activateItemsWindow}
         />
       )}
+      {Object.entries(masterWindows).map(([masterName, masterWindow]) => (
+        <MasterEntry
+          key={masterName}
+          config={masterConfigs[masterName]}
+          minimized={masterWindow.minimized}
+          maximized={masterWindow.maximized}
+          isWorkspaceActive={activeView === `master:${masterName}`}
+          geometry={masterWindow}
+          onMinimize={() => minimizeMasterWindow(masterName)}
+          onMaximize={() => toggleMasterWindowMaximized(masterName)}
+          onClose={() => closeMasterWindow(masterName)}
+          onFocus={() => activateMasterWindow(masterName)}
+        />
+      ))}
       {firmDetailsWindow && (
         <FirmDetails
           minimized={firmDetailsWindow.minimized}
@@ -869,13 +959,18 @@ export default function Home() {
           onResize={(width, height) => updateTransactionWindow(window.id, { width, height })}
         />
       ))}
-      {(itemsWindow?.minimized || accountWindow?.minimized || firmDetailsWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
+      {(itemsWindow?.minimized || Object.values(masterWindows).some((window) => window.minimized) || accountWindow?.minimized || firmDetailsWindow?.minimized || transactionWindows.some((window) => window.minimized)) && (
         <div className="transaction-dock print:hidden" aria-label="Minimized transaction screens">
           {itemsWindow?.minimized && (
             <button type="button" onClick={activateItemsWindow}>
               Restore Items
             </button>
           )}
+          {Object.entries(masterWindows).filter(([, masterWindow]) => masterWindow.minimized).map(([masterName]) => (
+            <button type="button" key={masterName} onClick={() => activateMasterWindow(masterName)}>
+              Restore {masterName}
+            </button>
+          ))}
           {firmDetailsWindow?.minimized && (
             <button type="button" onClick={activateFirmDetails}>
               Restore Firm Details

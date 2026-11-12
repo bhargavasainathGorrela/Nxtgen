@@ -113,6 +113,25 @@
   max-width: 1088px;
 }
 
+.master-window {
+  max-width: 900px;
+  min-height: 0;
+}
+
+.master-window .master-screen-header {
+  flex: 0 0 auto;
+}
+
+.master-window .master-card {
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.master-window.is-maximized {
+  max-width: none;
+}
+
 .items-window.is-maximized {
   max-width: none;
 }
