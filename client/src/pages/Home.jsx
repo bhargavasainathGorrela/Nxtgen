@@ -8,6 +8,31 @@ import TransactionScreen from "./TransactionScreen";
 import "./Home.css";
 
 const USER_STORAGE_KEY = "stockwise-user";
+const NEWS_BACKGROUNDS = {
+  india: "photo-1524492412937-b28074a5d7da",
+  hyderabad: "photo-1519501025264-65ba15a82390",
+  sports: "photo-1461896836934-ffe607ba8211",
+  technology: "photo-1518770660439-4636190af475",
+  business: "photo-1486406146926-c627a92ad1ab",
+  health: "photo-1576091160399-112ba8d25d1d",
+};
+
+function getNewsBackground(title, region) {
+  const headline = title.toLowerCase();
+  const topic = [
+    ["sports", /\b(cricket|football|sport|match|tournament|player|team)\b/],
+    ["technology", /\b(technology|tech|ai|digital|cyber|software|startup)\b/],
+    ["business", /\b(business|market|stock|economy|trade|company|industry)\b/],
+    ["health", /\b(health|hospital|medical|doctor|disease|medicine)\b/],
+  ].find(([, pattern]) => pattern.test(headline));
+  const imageId = topic
+    ? NEWS_BACKGROUNDS[topic[0]]
+    : region === "Hyderabad"
+      ? NEWS_BACKGROUNDS.hyderabad
+      : NEWS_BACKGROUNDS.india;
+  return `https://images.unsplash.com/${imageId}?auto=format&fit=crop&w=1600&q=80`;
+}
+
 const settingsItems = [
   "Security",
   "General",
@@ -934,8 +959,25 @@ export default function Home() {
         ) : newsError && newsItems.length === 0 ? (
           <p className="news-status news-error" role="alert">{newsError}</p>
         ) : newsItems.length > 0 ? (
-          <article className="news-slide" aria-live="polite">
-            <span className="news-region">{newsItems[activeNewsIndex].region}</span>
+          <article
+            className="news-slide"
+            key={newsItems[activeNewsIndex].link}
+            aria-live="polite"
+          >
+            <img
+              className="news-slide-background"
+              src={getNewsBackground(
+                newsItems[activeNewsIndex].title,
+                newsItems[activeNewsIndex].region,
+              )}
+              alt=""
+              aria-hidden="true"
+              onError={(event) => { event.currentTarget.hidden = true; }}
+            />
+            <div className="news-slide-meta">
+              <span className="news-region">{newsItems[activeNewsIndex].region}</span>
+              <span className="news-slide-kicker">TOP STORY</span>
+            </div>
             <a
               className="news-headline"
               href={newsItems[activeNewsIndex].link}
@@ -974,6 +1016,9 @@ export default function Home() {
                   ›
                 </button>
               </div>
+            </div>
+            <div className="news-slide-progress" aria-hidden="true">
+              <span style={{ width: `${((activeNewsIndex + 1) / newsItems.length) * 100}%` }} />
             </div>
           </article>
         ) : (
