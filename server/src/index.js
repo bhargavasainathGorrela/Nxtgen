@@ -946,5 +946,83 @@ app.delete('/api/transactions/:type/:id', async (req, res) => {
   }
 });
 
+function decodeNewsXml(value) {
+  return value
+    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/gi, '$1')
+    .replace(/<[^>]*>/g, '')
+    .replace(/&#(x[0-9a-f]+|\d+);/gi, (entity, code) => {
+      const codePoint = code[0].toLowerCase() === 'x'
+        ? parseInt(code.slice(1), 16)
+        : parseInt(code, 10);
+      return Number.isFinite(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : entity;
+    })
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+function parseNewsFeed(xml, region) {
+  return [...xml.matchAll(/<item\b[^>]*>([\s\S]*?)<\/item>/gi)]
+    .slice(0, 8)
+    .map(([, item]) => {
+      const getTag = (tag) => {
+        const match = item.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+        return match ? decodeNewsXml(match[1].trim()) : '';
+      };
+      const title = getTag('title');
+      const link = getTag('link');
+      const publishedDate = new Date(getTag('pubDate'));
+      return {
+        region,
+        title,
+        link,
+        publishedAt: Number.isNaN(publishedDate.getTime()) ? '' : publishedDate.toISOString()
+      };
+    })
+    .filter((item) => item.title && item.link);
+}
+
+let newsCache = null;
+app.get('/api/news', async (req, res) => {
+  if (newsCache && newsCache.expiresAt > Date.now()) {
+    return res.json({ news: newsCache.news, updatedAt: newsCache.updatedAt });
+  }
+
+  const feeds = [
+    { region: 'India', query: 'India when:1d' },
+    { region: 'Hyderabad', query: 'Hyderabad when:1d' }
+  ];
+  try {
+    const news = (await Promise.all(feeds.map(async ({ region, query }) => {
+      const feedUrl = new URL('https://news.google.com/rss/search');
+      feedUrl.searchParams.set('q', query);
+      feedUrl.searchParams.set('hl', 'en-IN');
+      feedUrl.searchParams.set('gl', 'IN');
+      feedUrl.searchParams.set('ceid', 'IN:en');
+
+      const response = await fetch(feedUrl, { signal: AbortSignal.timeout(10000) });
+      if (!response.ok) {
+        throw new Error(`News feed request failed (HTTP ${response.status}).`);
+      }
+      return parseNewsFeed(await response.text(), region);
+    }))).flat();
+    if (news.length === 0) throw new Error('The news feeds returned no headlines.');
+
+    newsCache = {
+      news,
+      updatedAt: new Date().toISOString(),
+      expiresAt: Date.now() + 10 * 60 * 1000
+    };
+    res.json({ news, updatedAt: newsCache.updatedAt });
+  } catch (err) {
+    console.error("Unable to load today's news:", err);
+    res.status(502).json({ message: "Today's news is temporarily unavailable." });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server listening on ${PORT}`));

@@ -195,6 +195,10 @@ export default function Home() {
   const [transactionWindows, setTransactionWindows] = useState([]);
   const [activeTransactionWindow, setActiveTransactionWindow] = useState(null);
   const [transactionPage, setTransactionPage] = useState(0);
+  const [newsItems, setNewsItems] = useState([]);
+  const [activeNewsIndex, setActiveNewsIndex] = useState(0);
+  const [newsLoading, setNewsLoading] = useState(true);
+  const [newsError, setNewsError] = useState("");
   const [isSettingsMenuOpen, setIsSettingsMenuOpen] = useState(false);
   const [activeSetting, setActiveSetting] = useState("");
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -333,6 +337,54 @@ export default function Home() {
     const lastPage = Math.max(0, Math.ceil(transactionWindows.length / transactionPageSize) - 1);
     setTransactionPage((page) => Math.min(page, lastPage));
   }, [transactionWindows.length]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadNews = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/news");
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.toLowerCase().includes("application/json")) {
+          throw new Error(
+            `News API returned a non-JSON response (HTTP ${response.status}). Restart the backend so its /api/news route is available.`,
+          );
+        }
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Unable to load today's news.");
+        }
+        if (!Array.isArray(data.news)) {
+          throw new Error("The news service returned an invalid response.");
+        }
+        if (isMounted) {
+          setNewsItems(data.news);
+          setActiveNewsIndex(0);
+          setNewsError("");
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setNewsError(loadError.message || "Unable to load today's news.");
+        }
+      } finally {
+        if (isMounted) setNewsLoading(false);
+      }
+    };
+
+    loadNews();
+    const refreshInterval = window.setInterval(loadNews, 10 * 60 * 1000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(refreshInterval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (newsItems.length < 2) return undefined;
+    const slideInterval = window.setInterval(() => {
+      setActiveNewsIndex((index) => (index + 1) % newsItems.length);
+    }, 7000);
+    return () => window.clearInterval(slideInterval);
+  }, [newsItems.length]);
 
   const initials = userName
     .trim()
@@ -850,12 +902,6 @@ export default function Home() {
 
       <section className="dashboard-grid" aria-label="Business overview">
         <article className="overview-card">
-          <p className="card-label">Total products</p>
-          <p className="card-value">1,248</p>
-          <p className="card-note"><span className="positive">↗ 12%</span> vs last month</p>
-          <span className="card-icon inventory-icon" aria-hidden="true">▦</span>
-        </article>
-        <article className="overview-card">
           <p className="card-label">Stock value</p>
           <p className="card-value">$84,320</p>
           <p className="card-note"><span className="positive">↗ 8.2%</span> vs last month</p>
@@ -875,19 +921,64 @@ export default function Home() {
         </article>
       </section>
 
-      <section className="activity-panel">
+      <section className="activity-panel news-panel" aria-label="Today's news">
         <div className="panel-heading">
           <div>
-            <h2>Recent activity</h2>
-            <p>Your latest inventory updates</p>
+            <h2>Today&apos;s news</h2>
+            <p>Latest headlines from India and Hyderabad</p>
           </div>
-          <button className="text-button" type="button">View all <span aria-hidden="true">→</span></button>
+          <span className="news-date">{new Date().toLocaleDateString("en-IN", { dateStyle: "medium" })}</span>
         </div>
-        <div className="empty-activity">
-          <span className="empty-icon" aria-hidden="true">⌁</span>
-          <p>You&apos;re all caught up</p>
-          <span>New activity will appear here.</span>
-        </div>
+        {newsLoading && newsItems.length === 0 ? (
+          <p className="news-status" role="status">Loading today&apos;s headlines...</p>
+        ) : newsError && newsItems.length === 0 ? (
+          <p className="news-status news-error" role="alert">{newsError}</p>
+        ) : newsItems.length > 0 ? (
+          <article className="news-slide" aria-live="polite">
+            <span className="news-region">{newsItems[activeNewsIndex].region}</span>
+            <a
+              className="news-headline"
+              href={newsItems[activeNewsIndex].link}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {newsItems[activeNewsIndex].title}
+            </a>
+            <div className="news-slide-footer">
+              <time dateTime={newsItems[activeNewsIndex].publishedAt}>
+                {newsItems[activeNewsIndex].publishedAt
+                  ? new Date(newsItems[activeNewsIndex].publishedAt).toLocaleString("en-IN", {
+                    dateStyle: "medium",
+                    timeStyle: "short",
+                  })
+                  : ""}
+              </time>
+              <div className="news-controls">
+                <button
+                  className="news-control"
+                  type="button"
+                  aria-label="Previous headline"
+                  onClick={() => setActiveNewsIndex((index) => (
+                    (index - 1 + newsItems.length) % newsItems.length
+                  ))}
+                >
+                  ‹
+                </button>
+                <span>{activeNewsIndex + 1} / {newsItems.length}</span>
+                <button
+                  className="news-control"
+                  type="button"
+                  aria-label="Next headline"
+                  onClick={() => setActiveNewsIndex((index) => (index + 1) % newsItems.length)}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
+          </article>
+        ) : (
+          <p className="news-status">No headlines are available right now.</p>
+        )}
       </section>
       </>
       )}

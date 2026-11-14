@@ -5,11 +5,11 @@ const TRANSACTION_TYPES = {
   sale: { title: "Sale", accountType: "customer", hasImport: false },
   purchase: { title: "Purchase", accountType: "supplier", hasImport: true },
   saleReturn: { title: "Sale Return", accountType: "customer", hasImport: false },
-  purchaseReturn: { title: "Purchase Return", accountType: "supplier", hasImport: false },
+  purchaseReturn: { title: "Purchase Return", accountType: "supplier", hasImport: true },
 };
 const card = "rounded-[11px] border border-[#e9efec] bg-white p-5 shadow-[0_2px_6px_rgba(27,49,39,0.03)] dark:border-[#2a3931] dark:bg-[#1a241f] max-[520px]:p-[13px]";
 const button = "min-h-9 rounded-md border border-[#dfe7e2] bg-white px-[14px] text-xs font-semibold text-[#435149] hover:border-[#a9cdb9] hover:bg-[#f3f8f5] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:hover:bg-[#26372e]";
-const primaryButton = "border-[#23815c] bg-[#23815c] text-white hover:border-[#1d704f] hover:bg-[#1d704f] dark:border-[#23815c] dark:bg-[#23815c] dark:text-white";
+const primaryButton = "border-[#23815c] bg-[#23815c] !text-white hover:border-[#1d704f] hover:bg-[#1d704f] dark:border-[#23815c] dark:bg-[#23815c]";
 const input = "h-9 w-full min-w-0 rounded-md border border-[#dfe7e2] bg-white px-[9px] text-xs text-[#27372f] outline-none focus:border-[#3a9a70] focus:ring-[3px] focus:ring-[#3a9a70]/[0.12] read-only:bg-[#f7f9f8] read-only:text-[#69766f] disabled:bg-[#f7f9f8] dark:border-[#38483f] dark:bg-[#1a241f] dark:text-[#d3ded7] dark:read-only:bg-[#222f28] dark:disabled:bg-[#222f28] print:border-0 print:bg-transparent print:text-black";
 const fieldLabel = "text-xs font-semibold text-[#536159] dark:text-[#b2c0b7]";
 const tableHeader = "border-b border-[#edf1ef] bg-[#f7f9f8] px-[7px] py-[7px] text-left text-[10px] font-semibold uppercase tracking-[0.35px] text-[#728078] dark:border-[#2a3931] dark:bg-[#222f28] dark:text-[#9eada4]";
@@ -163,6 +163,7 @@ export default function TransactionScreen({
   onResize,
 }) {
   const config = TRANSACTION_TYPES[type];
+  const isSaleScreen = type === "sale" || type === "saleReturn";
   const screenKey = `${type}-${windowId}`;
   const [accounts, setAccounts] = useState([]);
   const [items, setItems] = useState([]);
@@ -679,7 +680,7 @@ export default function TransactionScreen({
         )}
 
         <form className="transaction-entry-form" onSubmit={saveTransaction}>
-          <div className={`transaction-account-grid grid grid-cols-2 gap-3 py-[17px] pb-5 max-[520px]:grid-cols-1${type === "sale" ? " transaction-sale-account-grid" : ""}`}>
+          <div className={`transaction-account-grid grid grid-cols-2 gap-3 py-[17px] pb-5 max-[520px]:grid-cols-1${isSaleScreen ? " transaction-sale-account-grid" : ""}`}>
             <div className="transaction-account-left grid min-w-0 gap-1.5">
               <label className="transaction-inline-field grid min-w-0 gap-1.5">
                 <span className={fieldLabel}>Code <b className="text-[#ba4b41]">*</b></span>
@@ -700,33 +701,33 @@ export default function TransactionScreen({
                   ))}
                 </datalist>
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-name" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-name" : ""}`}>
                 <span className={fieldLabel}>Name</span>
                 <input className={input} value={transaction.name} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-cell" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-cell" : ""}`}>
                 <span className={fieldLabel}>Cell</span>
                 <input className={input} value={transaction.cell} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-city" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-city" : ""}`}>
                 <span className={fieldLabel}>City</span>
                 <input className={input} value={transaction.city} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-area" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-area" : ""}`}>
                 <span className={fieldLabel}>Area</span>
                 <input className={input} value={transaction.area} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-street" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-street" : ""}`}>
                 <span className={fieldLabel}>Street</span>
                 <input className={input} value={transaction.street} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-door-no" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-door-no" : ""}`}>
                 <span className={fieldLabel}>D.No</span>
                 <input className={input} value={transaction.doorNo} readOnly />
               </label>
             </div>
               <div className="transaction-account-right grid min-w-0 content-start gap-1.5">
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-bill-type" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-bill-type" : ""}`}>
                 <span className={fieldLabel}>Bill Type</span>
                 <select
                   className={input}
@@ -739,11 +740,11 @@ export default function TransactionScreen({
                   <option value="upi">UPI</option>
                 </select>
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-feed-no" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-feed-no" : ""}`}>
                 <span className={fieldLabel}>Feed No</span>
                 <input className={input} value={transaction.feedNo} readOnly />
               </label>
-              <label className={`transaction-inline-field grid min-w-0 gap-1.5${type === "sale" ? " transaction-sale-compact-date" : ""}`}>
+              <label className={`transaction-inline-field grid min-w-0 gap-1.5${isSaleScreen ? " transaction-sale-compact-date" : ""}`}>
                 <span className={fieldLabel}>Date</span>
                 <input
                   className={input}
@@ -753,7 +754,7 @@ export default function TransactionScreen({
                   readOnly
                 />
               </label>
-              {type === "sale" && (
+              {isSaleScreen && (
                 <div className="transaction-account-totals grid min-w-0 grid-cols-2 gap-1.5">
                   <label className="transaction-inline-field grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Dis%</span>
@@ -800,15 +801,15 @@ export default function TransactionScreen({
               <button type="button" className={button} disabled={itemPage + 1 >= itemPageCount} onClick={() => setItemPage((page) => Math.min(itemPageCount - 1, page + 1))} aria-label="Next item rows">›</button>
             </div>
           </div>
-          <div className={`transaction-item-table hidden min-[800px]:block${type === "sale" ? " transaction-sale-item-table" : ""}`}>
+          <div className={`transaction-item-table hidden min-[800px]:block${isSaleScreen ? " transaction-sale-item-table" : ""}`}>
             <table
               className="w-full border-collapse text-left text-xs"
-              style={type === "sale" ? {
+              style={isSaleScreen ? {
                 width: `max(100%, ${itemColumnWidths.slice(0, 8).reduce((sum, width) => sum + width, 0)}px)`,
                 tableLayout: "fixed",
               } : undefined}
             >
-              {type === "sale" && (
+              {isSaleScreen && (
                 <colgroup>
                   {itemColumnWidths.slice(0, 8).map((width, index) => (
                     <col key={index} style={{ width }} />
@@ -817,22 +818,22 @@ export default function TransactionScreen({
               )}
               <thead>
                 <tr>
-                  <th className={`${tableHeader} min-w-[115px]`}>Item Code{type === "sale" && renderItemColumnResizer(0, "Item Code")}</th>
-                  <th className={`${tableHeader} min-w-[150px]`}>Item Name{type === "sale" && renderItemColumnResizer(1, "Item Name")}</th>
-                  <th className={tableHeader}>Price{type === "sale" && renderItemColumnResizer(2, "Price")}</th>
-                  <th className={tableHeader}>Qty{type === "sale" && renderItemColumnResizer(3, "Quantity")}</th>
-                  <th className={tableHeader}>Free{type === "sale" && renderItemColumnResizer(4, "Free")}</th>
-                  <th className={tableHeader}>Exp Yr{type === "sale" && renderItemColumnResizer(5, "Expiry year")}</th>
-                  <th className={tableHeader}>Exp Month{type === "sale" && renderItemColumnResizer(6, "Expiry month")}</th>
-                  <th className={tableHeader}>Amount{type === "sale" && renderItemColumnResizer(7, "Amount")}</th>
+                  <th className={`${tableHeader} min-w-[115px]`}>Item Code{isSaleScreen && renderItemColumnResizer(0, "Item Code")}</th>
+                  <th className={`${tableHeader} min-w-[150px]`}>Item Name{isSaleScreen && renderItemColumnResizer(1, "Item Name")}</th>
+                  <th className={tableHeader}>Price{isSaleScreen && renderItemColumnResizer(2, "Price")}</th>
+                  <th className={tableHeader}>Qty{isSaleScreen && renderItemColumnResizer(3, "Quantity")}</th>
+                  <th className={tableHeader}>Free{isSaleScreen && renderItemColumnResizer(4, "Free")}</th>
+                  <th className={tableHeader}>Exp Yr{isSaleScreen && renderItemColumnResizer(5, "Expiry year")}</th>
+                  <th className={tableHeader}>Exp Month{isSaleScreen && renderItemColumnResizer(6, "Expiry month")}</th>
+                  <th className={tableHeader}>Amount{isSaleScreen && renderItemColumnResizer(7, "Amount")}</th>
                 </tr>
               </thead>
               <tbody>
                 {visibleLines.map(({ line, index }) => (
-                  <tr className={`text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]${type === "sale" ? " transaction-sale-item-row" : ""}`} key={`${line.id || "new"}-${index}`}>
+                  <tr className={`text-[#46564e] hover:bg-[#f0f7f3] dark:text-[#b2c0b7] dark:hover:bg-[#26372e]${isSaleScreen ? " transaction-sale-item-row" : ""}`} key={`${line.id || "new"}-${index}`}>
                     <td className={`${tableCell} min-w-[115px]`}>
                       <input
-                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                        className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                         list={`transaction-items-${screenKey}`}
                         value={line.itemCode}
                         readOnly={isReadOnly}
@@ -844,7 +845,7 @@ export default function TransactionScreen({
                     </td>
                     <td className={`${tableCell} min-w-[150px]`}>
                       <input
-                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                        className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                         value={line.itemName}
                         readOnly={isReadOnly || Boolean(line.itemCode)}
                         maxLength={200}
@@ -855,7 +856,7 @@ export default function TransactionScreen({
                     {["price", "qty", "free", "expYear", "expMonth"].map((field) => (
                       <td className={tableCell} key={field}>
                         <input
-                          className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                          className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                           type="number"
                           min="0"
                           step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
@@ -885,14 +886,14 @@ export default function TransactionScreen({
               </tbody>
             </table>
           </div>
-          <div className={`transaction-lines-grid grid gap-3 min-[800px]:hidden${type === "sale" ? " transaction-sale-lines-grid" : ""}`}>
+          <div className={`transaction-lines-grid grid gap-3 min-[800px]:hidden${isSaleScreen ? " transaction-sale-lines-grid" : ""}`}>
             {visibleLines.map(({ line, index }) => (
-              <div className={`grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]${type === "sale" ? " transaction-sale-line-card" : ""}`} key={`${line.id || "mobile"}-${index}`}>
-                <div className={`grid min-w-0 grid-cols-2 gap-3${type === "sale" ? " transaction-sale-line-fields" : ""}`}>
+              <div className={`grid min-w-0 gap-3 rounded-lg border border-[#e9efec] bg-[#fbfcfb] p-3 dark:border-[#2a3931] dark:bg-[#1a241f]${isSaleScreen ? " transaction-sale-line-card" : ""}`} key={`${line.id || "mobile"}-${index}`}>
+                <div className={`grid min-w-0 grid-cols-2 gap-3${isSaleScreen ? " transaction-sale-line-fields" : ""}`}>
                   <label className="grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Item Code</span>
                     <input
-                      className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                      className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                       list={`transaction-items-${screenKey}`}
                       value={line.itemCode}
                       readOnly={isReadOnly}
@@ -905,7 +906,7 @@ export default function TransactionScreen({
                   <label className="grid min-w-0 gap-1.5">
                     <span className={fieldLabel}>Item Name</span>
                     <input
-                      className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                      className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                       value={line.itemName}
                       readOnly={isReadOnly || Boolean(line.itemCode)}
                       maxLength={200}
@@ -923,7 +924,7 @@ export default function TransactionScreen({
                     <label className="grid min-w-0 gap-1.5" key={field}>
                       <span className={fieldLabel}>{label}</span>
                       <input
-                        className={type === "sale" ? `${input} transaction-sale-grid-input` : input}
+                        className={isSaleScreen ? `${input} transaction-sale-grid-input` : input}
                         type="number"
                         min="0"
                         step={field === "expYear" || field === "expMonth" ? "1" : "0.01"}
@@ -960,7 +961,7 @@ export default function TransactionScreen({
           </datalist>
 
           <div className="transaction-totals-grid my-[17px] mb-5 grid grid-cols-2 gap-3 max-[520px]:grid-cols-1">
-            {type !== "sale" && (
+            {!isSaleScreen && (
               <>
                 <label className="transaction-inline-field grid min-w-0 gap-1.5">
                   <span className={fieldLabel}>Dis%</span>

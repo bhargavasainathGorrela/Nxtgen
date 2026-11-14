@@ -1265,7 +1265,7 @@
 
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
@@ -1347,6 +1347,87 @@
   border-radius: 11px;
   background: #fff;
   box-shadow: 0 2px 6px rgb(27 49 39 / 3%);
+}
+
+.news-panel {
+  padding-bottom: 20px;
+}
+
+.news-date,
+.news-slide-footer {
+  color: #87928c;
+  font-size: 11px;
+}
+
+.news-slide {
+  display: flex;
+  min-height: 170px;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.news-region {
+  align-self: flex-start;
+  border-radius: 999px;
+  background: #eff7f2;
+  padding: 5px 10px;
+  color: #23734f;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.news-headline {
+  max-width: 900px;
+  color: #23332b;
+  font-size: clamp(17px, 2.1vw, 23px);
+  font-weight: 650;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.news-headline:hover {
+  color: #1d704f;
+  text-decoration: underline;
+}
+
+.news-slide-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.news-controls {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.news-control {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #dfe7e2;
+  border-radius: 6px;
+  background: #fff;
+  color: #435149;
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.news-status {
+  display: grid;
+  min-height: 170px;
+  place-items: center;
+  color: #87928c;
+  font-size: 13px;
+  text-align: center;
+}
+
+.news-status.news-error {
+  color: #b13d36;
 }
 
 .panel-heading {
@@ -1690,8 +1771,30 @@
 .home-page[data-theme="dark"] .card-label,
 .home-page[data-theme="dark"] .card-note,
 .home-page[data-theme="dark"] .panel-heading p,
-.home-page[data-theme="dark"] .empty-activity {
+.home-page[data-theme="dark"] .empty-activity,
+.home-page[data-theme="dark"] .news-date,
+.home-page[data-theme="dark"] .news-slide-footer,
+.home-page[data-theme="dark"] .news-status {
   color: #9aa9a0;
+}
+
+.home-page[data-theme="dark"] .news-headline {
+  color: #e3ebe6;
+}
+
+.home-page[data-theme="dark"] .news-headline:hover {
+  color: #8bd1ac;
+}
+
+.home-page[data-theme="dark"] .news-region {
+  background: #26372e;
+  color: #8bd1ac;
+}
+
+.home-page[data-theme="dark"] .news-control {
+  border-color: #38483f;
+  background: #1a241f;
+  color: #d3ded7;
 }
 
 .home-page[data-theme="dark"] .empty-activity p {
